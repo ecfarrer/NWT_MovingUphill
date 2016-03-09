@@ -1,29 +1,17 @@
 
 
-save.image("~/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/MovingUphill_Workspace_Analysis.Rdata")
+#save.image("~/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/MovingUphill_Workspace_Analysis.Rdata")
 
-load("~/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/MovingUphill_Workspace_Cleaning.Rdata")
+load("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/MovingUphill_Workspace_Analysis.Rdata")
 
 
 library(vegan)
 library(reshape)
 library(plotrix)
+library(foreach)
+library(doParallel)
 
-
-######Diversity caluculations######
-#Input dataset is dats6order, and requires greater66plants from below
-species<-dats6order[,27:243]
-diversity<-vegan::diversity(species)
-richness<-rowSums(species>0)
-m1<-aggregate.data.frame(diversity, by=list(greater66plants),mean)
-se1<-aggregate.data.frame(diversity, by=list(greater66plants),std.error)
-plotCI(barplot(m1$x,names.arg=m1$Group.1),m1$x,uiw=se1$x,add=T,pch=NA)
-m1<-aggregate.data.frame(richness, by=list(greater66plants),mean)
-se1<-aggregate.data.frame(richness, by=list(greater66plants),std.error)
-plotCI(barplot(m1$x,names.arg=m1$Group.1),m1$x,uiw=se1$x,add=T,pch=NA)
-plot(dats6order$Plant_Div,diversity)
-
-
+getDoParWorkers()
 
 
 ######Co-occurrence pairwise correlations###### 
@@ -37,13 +25,35 @@ comm.data<-dats6order#read.csv("/Users/farrer/Desktop/Networks/total_order_info.
 comm.data<-cbind(comm.data[,c(1:26)],rrarefy(comm.data[,-c(1:26)],1250))
 #comm.data[,27:243]<-comm.data[,27:243]/rowSums(comm.data[,27:243])*100
 
-#temp<-cbind(as.character(comm.data$Sample_name),comm.data$Plant_Dens)
-#temp[order(as.numeric(as.character(comm.data$Sample_name))),]
-
 greater66plants<-factor(ifelse(comm.data$Plant_Dens>66,"hi","lo")) #this is stem density, including mosses
 comm.data<-cbind(greater66plants,comm.data)
 trts<-as.vector(unique(greater66plants))
 
+
+#Read in plant data
+plantcomp<-read.csv("/Users/farrer/Dropbox/Niwot Moving Uphill/Analysis/Niwot_MovingUpHill_comp2015.csv")
+head(plantcomp)
+names(plantcomp)[1]<-"Sample_name"
+
+#Remove plant species only present in one or two plots
+dim(plantcomp)
+plantcomp2<-plantcomp[,colSums(plantcomp>0)>2]
+plantlabels<-as.data.frame(cbind(colnames(plantcomp2)[2:56],"Plant"))
+colnames(plantlabels)<-c("orders","kingdomlabels")
+
+#merge plants with microbes
+comm.data$Sample_name<-as.numeric(as.character(comm.data$Sample_name))
+comm.datamp<-merge(comm.data,plantcomp2,"Sample_name",sort=F)
+
+
+
+#number of iterations
+#setup parallel backend to use 8 processors
+cl<-makeCluster(4)
+registerDoParallel(cl)
+#start time
+strt<-Sys.time()
+#loop
 results<-matrix(nrow=0,ncol=7)
 options(warnings=-1)
 
@@ -51,7 +61,52 @@ for(a in 1:length(trts)){
   #pull the first element from the vector of treatments
   trt.temp<-trts[a]
   #subset the dataset for those treatments
-  temp<-subset(comm.data, greater66plants==trt.temp)
+  temp<-subset(comm.datamp, greater66plants==trt.temp)
+  
+  #in this case the community data started at column 28, so the loop for co-occurrence has to start at that point
+  for(b in 28:(dim(temp)[2]-1)){
+
+	results1<-foreach(c=(b+1):(dim(temp)[2]),.combine=rbind) %dopar% {
+      species1.ab<-sum(temp[,b])
+      species2.ab<-sum(temp[,c])
+      #if the column is all 0's no co-occurrence will be performed
+      if(species1.ab >1 & species2.ab >1){
+        test<-cor.test(temp[,b],temp[,c],method="spearman",na.action=na.rm)
+        rho<-test$estimate
+        p.value<-test$p.value
+      }    
+      if(species1.ab <=1 | species2.ab <= 1){
+        rho<-0
+        p.value<-1
+      }	
+      new.row<-c(trts[a],names(temp)[b],names(temp)[c],rho,p.value,species1.ab,species2.ab)
+      new.row		
+    }
+    results<-rbind(results,results1)
+  }
+  print(a/length(trts))
+}
+head(results)
+resultsoldmp<-results
+print(Sys.time()-strt)#1 minute
+stopCluster(cl)
+
+rownames(resultsoldmp)<-1:dim(resultsoldmp)[1]
+results2<-data.frame(resultsoldmp[,1:3],as.numeric(resultsoldmp[,4]),as.numeric(resultsoldmp[,5]),as.numeric(resultsoldmp[,6]),as.numeric(resultsoldmp[,7]))
+results<-results2
+names(results)<-c("trt","taxa1","taxa2","rho","p.value","ab1","ab2")
+
+#start time
+strt<-Sys.time()
+#loop
+results<-matrix(nrow=0,ncol=7)
+options(warnings=-1)
+
+for(a in 1:length(trts)){
+  #pull the first element from the vector of treatments
+  trt.temp<-trts[a]
+  #subset the dataset for those treatments
+  temp<-subset(comm.datamp, greater66plants==trt.temp)
   
   #in this case the community data started at column 28, so the loop for co-occurrence has to start at that point
   for(b in 28:(dim(temp)[2]-1)){
@@ -72,30 +127,26 @@ for(a in 1:length(trts)){
         rho<-0
         p.value<-1
       }	
-      
       new.row<-c(trts[a],names(temp)[b],names(temp)[c],rho,p.value,species1.ab,species2.ab)
       results<-rbind(results,new.row)			
-      
     }
-    
   }
-  
-  
   print(a/length(trts))
-  
 }
 head(results)
-resultsold<-results
+resultsoldmp2<-results
+print(Sys.time()-strt) #11min
 #results<-data.frame(data.matrix(results))
 #names(results)<-c("trt","taxa1","taxa2","rho","p.value","ab1","ab2")
 
 #Emily: it made the numeric values in results factors so I had to change it
-rownames(resultsold)<-1:dim(resultsold)[1]
-results2<-data.frame(resultsold[,1:3],as.numeric(resultsold[,4]),as.numeric(resultsold[,5]),as.numeric(resultsold[,6]),as.numeric(resultsold[,7]))
-results<-results2
-names(results)<-c("trt","taxa1","taxa2","rho","p.value","ab1","ab2")
+rownames(resultsoldmp2)<-1:dim(resultsoldmp2)[1]
+results2<-data.frame(resultsoldmp2[,1:3],as.numeric(resultsoldmp2[,4]),as.numeric(resultsoldmp2[,5]),as.numeric(resultsoldmp2[,6]),as.numeric(resultsoldmp2[,7]))
+results2<-results2
+names(results2)<-c("trt","taxa1","taxa2","rho","p.value","ab1","ab2")
 
-
+#######probably should do one more test to make sure the results are the same
+#results (from parallel), results2 (not parallel)
 
 
 
@@ -116,8 +167,8 @@ co_occur_pairs<-function(dataset){
   final.results<-data.frame()
   rhos<-c(-.75,-.5,.5,.75)
   trts<-as.vector(unique(dataset$trt))
-
-    for(t in 1:length(trts)){
+  
+  for(t in 1:length(trts)){
     #t<-1
     dataset_trt<-subset(dataset, trt==trts[t])
     dataset_trt_no0<-subset(dataset_trt, ab1 > 2 & ab2 > 2)#Ryan had this at 0
@@ -150,10 +201,18 @@ co_occur_pairs<-function(dataset){
 }
 
 #results<-read.csv(file.choose())
-edge_lists<-co_occur_pairs(results)
+edge_listsmp<-co_occur_pairs(results)
+
+
 
 #Plotting
-inputhi<-subset(edge_lists, rho_cut>0.4&trt=="hi")[,3:4]
+
+plantcols<-data.frame(kingdomlabels=c("Amoebozoa","Archaeplastida","Discicristoidea","Fungi","Holozoa","Nonphotosynthetic_Alveolata","Nonphotosynthetic_Discoba","Nonphotosynthetic_Eukaryota","Photosynthetic_Alveolata","Photosynthetic_Discoba","Rhizaria","Plant"),color=c("red","blue","red","yellow","orange","red","red","red","blue","blue","red","green"))
+labelsall<-rbind(labelfile,plantlabels)
+labelsall2<-merge(labelsall,plantcols)
+labelsall2$color<-as.character(labelsall2$color)
+
+inputhi<-subset(edge_listsmp, rho_cut>0.4&trt=="hi")[,3:4]
 graph1<-simplify(graph.edgelist(as.matrix(inputhi),directed=FALSE))
 #graph1$layout <- layout_in_circle
 eb<-edge.betweenness.community(graph1)
@@ -162,10 +221,11 @@ plot(graph1,vertex.size=4,vertex.color=membership(eb),edge.curved=T,vertex.label
 
 verticesgraph1<-as.data.frame(rownames(as.matrix(V(graph1))))
 colnames(verticesgraph1)<-"orders"
-colorgraph1<-unique(merge(verticesgraph1,labelfile,"orders",all.y=F,all.x=F,sort=F))
-plot(graph1,vertex.size=4,vertex.color=colorgraph1$kingdomlabels,edge.curved=T,vertex.label=NA)
+colorgraph1<-unique(merge(verticesgraph1,labelsall2,"orders",all.y=F,all.x=F,sort=F))
+plot(graph1,vertex.size=4,vertex.color=colorgraph1$color,edge.curved=T,vertex.label=NA)
+plot(graph1,vertex.size=4,vertex.color=colorgraph1$color,edge.curved=T)
 
-inputlo<-subset(edge_lists, rho_cut>0.4&trt=="lo")[,3:4]
+inputlo<-subset(edge_listsmp, rho_cut>0.4&trt=="lo")[,3:4]
 graph2<-simplify(graph.edgelist(as.matrix(inputlo),directed=FALSE))
 #graph2$layout <- layout_in_circle
 eb<-edge.betweenness.community(graph2)
@@ -174,9 +234,9 @@ plot(graph2,vertex.size=4,vertex.color=membership(eb),edge.curved=T,vertex.label
 
 verticesgraph2<-as.data.frame(rownames(as.matrix(V(graph2))))
 colnames(verticesgraph2)<-"orders"
-colorgraph2<-unique(merge(verticesgraph2,labelfile,"orders",all.y=F,all.x=F,sort=F))
-plot(graph2,vertex.size=4,vertex.color=colorgraph2$kingdomlabels,edge.curved=T,vertex.label=NA)
-#yellow are fungi, light blue are green algae
+colorgraph2<-unique(merge(verticesgraph2,labelsall2,"orders",all.y=F,all.x=F,sort=F))
+plot(graph2,vertex.size=4,vertex.color=colorgraph2$color,edge.curved=T,vertex.label=NA)
+plot(graph2,vertex.size=4,vertex.color=colorgraph2$color,edge.curved=T)#yellow are fungi, light blue are green algae
 
 
 

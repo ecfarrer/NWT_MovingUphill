@@ -1,8 +1,5 @@
 
-setwd("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata")
-
-#movinguphillworkspace.Rdata
-#MovingUphill_Workspace_Cleaning.Rdata
+setwd("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/NWT_MovingUphill")
 
 save.image("~/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/MovingUphill_Workspace_Cleaning.Rdata")
 load("~/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/MovingUphill_Workspace_Cleaning.Rdata")
@@ -142,7 +139,7 @@ distmatp2<-UniFrac(talus,weighted=TRUE,normalized=FALSE)#this produces the outpu
 
 
 
-#Soil data from 2015
+######Soil data from 2015######
 dats<-subset_samples(dat, SampleType=="soil"&year=="2015")
 
 #take plants out
@@ -152,7 +149,6 @@ dats2<-subset_taxa(dats,domain=="Eukaryota"&class!="Embryophyta")
 wh0 = genefilter_sample(dats2, filterfun_sample(function(x) x > 0), A = 3)
 dats3 = prune_taxa(wh0, dats2)
 
-
 #transform to relative abudance
 #dats3 = transform_sample_counts(dats2, function(x) 100*x/sum(x) )
 
@@ -160,35 +156,6 @@ dats3 = prune_taxa(wh0, dats2)
 #dats5<-tax_glom(dats4,"order",NArm=FALSE)
 
 unique(tax_table(dats3)[,"major_clade"])
-
-Fungi
-
-algae - Archaeplastida
-  Chloroplastida
-  Stramenopiles
-  Rhodophyceae
-  Haptophyta
-
-Alveolata
-  apicomplexa (paraistes)
-  ciliophora (predators)
-  dinoflagellata (mostly photosynthetic); nonphotosynthetic  Protoperidinium, both SL163A10 and Pfiesteria (can if it eats an alga), unknown D244
-
-Discoba
-  Euglenozoa (photosynthetic)
-  Heterolobosea (parasites, free living, symbiotic, amoeba-like)
-  
-Rhizaria (unicellular amoeboid euks)
-
-Amoebozoa (amoebas)
-  
-Holozoa (all animals, not fungi)
-  within the animals the silva tax map file was blank for a numer of the important groups like nematodes/tardigrades/arthropods. I can either leave as is and call all "animals" or go to the silva file and annotate by hand
-
-Discicristoidea (amoebas)
-
-NAs are all heterotrophic protists/parasites
-
 unique(tax_table(subset_taxa(dats3,kingdom=="Discoba")))
 
 #dat5<-psmelt(dats4)#this puts it in long format (abundance is a column)
@@ -197,7 +164,7 @@ dats3tax<-as.data.frame(tax_table(dats3))
 dats3sample<-as.data.frame(sample_data(dats3))
 dats3otu<-as.data.frame(otu_table(dats3))
 
-#aggregate things by order - first for orders that are NA/uncultured/incertaesedis, use class information in the order column or the phylum
+#aggregate things by order - first for orders that are NA/uncultured/incertaesedis use class/phylum information in the order colum
 sort(unique(as.character(dats3tax$order)))
 orders<-as.character(dats3tax$order)
 classes<-as.character(dats3tax$class)
@@ -219,18 +186,18 @@ orders[ind1]<-paste("Unclassified",as.character(dats3tax$class[ind1]))
 orders[ind2]<-paste("Unclassified",as.character(dats3tax$phylum[ind2]))
 #orders[ind3]<-paste("Unclassified",as.character(dats4tax$kingdom[ind3]))
 
-#Making groups for labeling graphs, 
+#Making groups for labeling graphs
 Fungi (kingdom), 
 Archaeplastida (major_clade), combine the kingdoms Chloroplastida, Stramenopiles, Rhodophyceae, Haptophyta, 
-Rhizaria (kingdom), 
+Rhizaria (kingdom: unicellular amoeboid euks), 
 Amoebozoa(kingdom),
-Holozoa(kingdom),
-Discicristoidea(kingdom),
-photosynthetic Alveolata (phylum Dinoflagellata), 
-nonphotosynthetic Alveolata (phyla Ciliophora, protalveolata, apicomplexa), 
-photosynthetic Discoba (phylum Euglenozoa), 
-nonphotosnthetic Discoba (phylum Heterolobosea), 
-NA
+Holozoa(kingdom: all animals, not fungi) - note within the animals the silva tax map file was blank for a numer of the important groups like nematodes/tardigrades/arthropods. I can either leave as is and call all "animals" or go to the silva file and annotate by hand
+Discicristoidea(kingdom: amoebas),
+photosynthetic Alveolata (phylum Dinoflagellata: mostly photosynthetic; nonphotosynthetic Protoperidinium, both SL163A10 and Pfiesteria (can if it eats an alga), unknown D244), 
+nonphotosynthetic Alveolata (phyla Ciliophora(predators), protalveolata, apicomplexa (parasites)), 
+photosynthetic Discoba (phylum Euglenozoa: mostly photosynthetic), 
+nonphotosnthetic Discoba (phylum Heterolobosea: parasites, free living, symbiotic, amoeba-like), 
+NA - are all heterotrophic protists/parasites
 
 head(orders)
 kingdomlabels<-kingdom
@@ -267,7 +234,61 @@ min(rowSums(dats6))
 
 dats6order<-cbind(dats3sample,dats6)
 head(dats6order)
+greater66plants<-factor(ifelse(dats6order$Plant_Dens>66,"hi","lo")) #this is stem density, including mosses
+dats6order<-cbind(greater66plants,dats6order)
+dats6order$Sample_name<-as.numeric(as.character(dats6order$Sample_name))
 
+
+#Read in plant data to merge with order file
+plantcomp<-read.csv("/Users/farrer/Dropbox/Niwot Moving Uphill/Analysis/Niwot_MovingUpHill_comp2015.csv")
+head(plantcomp)
+names(plantcomp)[1]<-"Sample_name"
+
+#Remove plant species only present in one or two plots
+dim(plantcomp)
+plantcomp2<-plantcomp[,colSums(plantcomp>0)>2]
+plantlabels<-as.data.frame(cbind(colnames(plantcomp2)[2:56],"Plant"))
+colnames(plantlabels)<-c("orders","kingdomlabels")
+
+#Merge plants with microbes, plantcomp is everything, plantcomp2 removes doubletons/singletons
+microbplant<-merge(dats6order,plantcomp,"Sample_name",sort=F)
+microbplant2<-merge(dats6order,plantcomp2,"Sample_name",sort=F)
+head(microbplant)
+
+
+
+
+
+
+######Grouping by kingdom#####
+dat7<-data.frame(dats4[,1:16],kingdomlabels,dats4[,17:113])
+
+dat8<-aggregate.data.frame(dat7[,18:114],by=list(kingdomlabels=dat7$kingdomlabels),sum)
+rownames(dat8)<-dat8$kingdomlabels
+dat8$kingdomlabels<-NULL
+dat9<-t(dat8)
+head(dat9)
+dat9kingdom<-cbind(greater66plants,dats3sample,dat9)
+species<-dat9kingdom[,28:38]
+speciesrel<-species/rowSums(species)*100
+m1<-aggregate.data.frame(speciesrel, by=list(greater66plants),mean)
+
+
+
+
+
+
+
+#####Group things by genus / otu#####
+head(dats3otu)
+dats7otu<-t(dats3otu)
+dats8otu<-cbind(dats3sample,dats7otu)
+dim(dats8otu)
+
+#Remove otus only present in five or fewer plots
+dats8otuspe<-dats8otu[,27:5042]
+dats9otu<-cbind(dats8otu[,1:26],dats8otuspe[,colSums(dats8otuspe>0)>5])
+head(dats9otu)[,1:35]
 
 
 
