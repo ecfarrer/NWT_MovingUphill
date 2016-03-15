@@ -17,13 +17,17 @@ getDoParWorkers()
 ######Co-occurrence pairwise correlations###### 
 #Input dataset is dats6order
 
+comm.data<-dats10otu#
 comm.data<-dats6order#read.csv("/Users/farrer/Desktop/Networks/total_order_info.csv")
 #comm.data<-comm.data[,-1]
 #comm.data.read<-subset(comm.data, reads >= 1407)
 
 #Standardize to 100 or rarify to 1250. if I standardize, I will need to change code in the loop below because it has cutoffs of 1
-comm.data<-cbind(comm.data[,c(1:27)],rrarefy(comm.data[,-c(1:27)],1250))
+
+comm.data<-cbind(comm.data[,c(1:26)],rrarefy(comm.data[,-c(1:26)],1121))
 #comm.data[,27:243]<-comm.data[,27:243]/rowSums(comm.data[,27:243])*100
+
+greater66plants<-factor(ifelse(comm.data$Plant_Dens>66,"hi","lo")) #this is stem density, including mosses
 
 trts<-as.vector(unique(greater66plants))
 
@@ -50,7 +54,7 @@ for(a in 1:length(trts)){
   temp<-subset(comm.data,greater66plants==trt.temp)
   
   #in this case the community data started at column 28, so the loop for co-occurrence has to start at that point
-  for(b in 28:(dim(temp)[2]-1)){
+  for(b in (which(colnames(comm.data)=="Description")+1):(dim(temp)[2]-1)){
 	results1<-foreach(c=(b+1):(dim(temp)[2]),.combine=rbind) %dopar% {
       species1.ab<-sum(temp[,b])
       species2.ab<-sum(temp[,c])

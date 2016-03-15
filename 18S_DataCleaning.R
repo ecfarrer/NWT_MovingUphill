@@ -91,6 +91,10 @@ mytaxmatrix[which(mytaxmatrix=="0")]<-NA
 #mytaxmatrix[10:50,]
 
 
+#I should do some aggregating for orders and kingdom levels and integrate into mytaxmatrix here. however I only did it below for the 2015 data so I would need to look more closely at it if I wanted to insert it here.
+
+
+
 #Replace the new tax matrix in the otu file
 tax_table(otufile)<-mytaxmatrix
 
@@ -145,6 +149,74 @@ dats<-subset_samples(dat, SampleType=="soil"&year=="2015")
 #take plants out
 dats2<-subset_taxa(dats,domain=="Eukaryota"&class!="Embryophyta")
 
+#Renaming and organizing orders and kingdoms here, then replace the tax table in dats2 to include these new groupings
+dats2tax<-as.data.frame(tax_table(dats2))
+dim(dats2tax)
+
+#aggregate things by order - first for orders that are NA/uncultured/incertaesedis use class/phylum information in the order colum
+sort(unique(as.character(dats2tax$order)))
+orders<-as.character(dats2tax$order)
+classes<-as.character(dats2tax$class)
+phyla<-as.character(dats2tax$phylum)
+kingdom<-as.character(dats2tax$kingdom)
+indo<-which(orders%in%c("Incertae Sedis","uncultured",NA))
+indc<-which(classes%in%c("Incertae Sedis","uncultured",NA))
+indp<-which(phyla%in%c("Incertae Sedis","uncultured",NA))
+indk<-which(kingdom%in%c("Incertae Sedis","uncultured",NA))
+intersect(indp,indk)#every sample either has a phylum or kingdom
+orders[indo]<-NA
+classes[indc]<-NA
+phyla[indp]<-NA
+kingdom[indk]<-NA
+ind1<-which(is.na(orders)==T&is.na(classes)==F)
+ind2<-which(is.na(orders)==T&is.na(classes)==T&is.na(phyla)==F)
+#ind3<-which(is.na(orders)==T&is.na(classes)==T&is.na(phyla)==T) #not needed, the things without phylum must have had a class/order
+orders[ind1]<-paste("Unclassified",as.character(dats2tax$class[ind1]))
+orders[ind2]<-paste("Unclassified",as.character(dats2tax$phylum[ind2]))
+#orders[ind3]<-paste("Unclassified",as.character(dats4tax$kingdom[ind3]))
+
+#Making groups for labeling graphs
+#Fungi (kingdom), 
+#Archaeplastida (major_clade), combine the kingdoms Chloroplastida, Stramenopiles, Rhodophyceae, Haptophyta, 
+#Rhizaria (kingdom: unicellular amoeboid euks), 
+#Amoebozoa(kingdom),
+#Holozoa(kingdom: all animals, not fungi) - note within the animals the silva tax map file was blank for a numer of the important groups like nematodes/tardigrades/arthropods. I can either leave as is and call all "animals" or go to the silva file and annotate by hand
+#Discicristoidea(kingdom: amoebas),
+#photosynthetic Alveolata (phylum Dinoflagellata: mostly photosynthetic; nonphotosynthetic Protoperidinium, both SL163A10 and Pfiesteria (can if it eats an alga), unknown D244), 
+#nonphotosynthetic Alveolata (phyla Ciliophora(predators), protalveolata, apicomplexa (parasites)), 
+#photosynthetic Discoba (phylum Euglenozoa: mostly photosynthetic), 
+#nonphotosnthetic Discoba (phylum Heterolobosea: parasites, free living, symbiotic, amoeba-like), 
+#NA - are all heterotrophic protists/parasites
+
+head(orders)
+kingdomlabels<-kingdom
+ind<-which(kingdomlabels%in%c("Chloroplastida","Stramenopiles","Rhodophyceae","Haptophyta"))
+kingdomlabels[ind]<-"Archaeplastida"
+ind<-which(kingdomlabels=="Alveolata"&phyla=="Dinoflagellata")
+kingdomlabels[ind]<-"Photosynthetic_Alveolata"
+ind<-which(kingdomlabels=="Alveolata")
+kingdomlabels[ind]<-"Nonphotosynthetic_Alveolata"
+ind<-which(kingdomlabels=="Discoba"&phyla=="Euglenozoa")
+kingdomlabels[ind]<-"Photosynthetic_Discoba"
+ind<-which(kingdomlabels=="Discoba"&phyla=="Heterolobosea")
+kingdomlabels[ind]<-"Nonphotosynthetic_Discoba"
+ind<-which(is.na(kingdomlabels))# a few are NA, they are both heterotrophs or parasites/symbiont phyla[which(is.na(kingdomlabels))]
+kingdomlabels[ind]<-"Nonphotosynthetic_Eukaryota"
+
+labelfile<-unique(as.data.frame(cbind(otu=rownames(dats2tax),orders,kingdomlabels)))
+dim(labelfile)
+head(labelfile)
+
+head(dats2tax)
+dats2tax$ordergroup<-orders
+dats2tax$kingdomgroup<-kingdomlabels
+dats2taxm<-as.matrix(dats2tax)
+head(dats2taxm)
+head(tax_table(dats2))
+tax_table(dats2)<-dats2taxm
+
+
+
 #remove doubletons and singletons, taxa present in only 1 or 2 samples
 wh0 = genefilter_sample(dats2, filterfun_sample(function(x) x > 0), A = 3)
 dats3 = prune_taxa(wh0, dats2)
@@ -156,6 +228,7 @@ dats3 = prune_taxa(wh0, dats2)
 #dats5<-tax_glom(dats4,"order",NArm=FALSE)
 
 unique(tax_table(dats3)[,"major_clade"])
+unique(tax_table(dats2)[,"kingdom"])
 unique(tax_table(subset_taxa(dats3,kingdom=="Discoba")))
 
 #dat5<-psmelt(dats4)#this puts it in long format (abundance is a column)
@@ -186,19 +259,6 @@ orders[ind1]<-paste("Unclassified",as.character(dats3tax$class[ind1]))
 orders[ind2]<-paste("Unclassified",as.character(dats3tax$phylum[ind2]))
 #orders[ind3]<-paste("Unclassified",as.character(dats4tax$kingdom[ind3]))
 
-#Making groups for labeling graphs
-Fungi (kingdom), 
-Archaeplastida (major_clade), combine the kingdoms Chloroplastida, Stramenopiles, Rhodophyceae, Haptophyta, 
-Rhizaria (kingdom: unicellular amoeboid euks), 
-Amoebozoa(kingdom),
-Holozoa(kingdom: all animals, not fungi) - note within the animals the silva tax map file was blank for a numer of the important groups like nematodes/tardigrades/arthropods. I can either leave as is and call all "animals" or go to the silva file and annotate by hand
-Discicristoidea(kingdom: amoebas),
-photosynthetic Alveolata (phylum Dinoflagellata: mostly photosynthetic; nonphotosynthetic Protoperidinium, both SL163A10 and Pfiesteria (can if it eats an alga), unknown D244), 
-nonphotosynthetic Alveolata (phyla Ciliophora(predators), protalveolata, apicomplexa (parasites)), 
-photosynthetic Discoba (phylum Euglenozoa: mostly photosynthetic), 
-nonphotosnthetic Discoba (phylum Heterolobosea: parasites, free living, symbiotic, amoeba-like), 
-NA - are all heterotrophic protists/parasites
-
 head(orders)
 kingdomlabels<-kingdom
 ind<-which(kingdomlabels%in%c("Chloroplastida","Stramenopiles","Rhodophyceae","Haptophyta"))
@@ -218,6 +278,7 @@ labelfile<-as.data.frame(cbind(orders,kingdomlabels))
 
 head(dats3tax)
 dats3tax$ordergroup<-orders
+XXXXXXX
 
 head(dats3otu)
 head(dats3sample)
@@ -284,11 +345,16 @@ head(dats3otu)
 dats7otu<-t(dats3otu)
 dats8otu<-cbind(dats3sample,dats7otu)
 dim(dats8otu)
-
+head(dats8otu)[1:4,1:28]#otus start at column 27
 #Remove otus only present in five or fewer plots
 dats8otuspe<-dats8otu[,27:5042]
-dats9otu<-cbind(dats8otu[,1:26],dats8otuspe[,colSums(dats8otuspe>0)>5])
+dats9otu<-cbind(dats8otu[,1:26],dats8otuspe[,colSums(dats8otuspe>0)>5])#2455 taxa
 head(dats9otu)[,1:35]
 
-
-
+#second try, pruning a bit more, need to be in 10 samples
+wh0 = genefilter_sample(dats2, filterfun_sample(function(x) x > 0), A = 15)#1008 taxa
+dats10 = prune_taxa(wh0, dats2)
+dats10
+min(sample_sums(dats10))
+dats10otu<-cbind(sample_data(dats2),t(otu_table(dats10)))
+head(dats10otu)[,1:40]
