@@ -12,6 +12,7 @@ library(tidyr)
 
 
 ######Diversity caluculations on non-rarefied data######
+#I think we do need to rarefy, there is a huge impact of sequencing depth on richness (not a strong effect on diversty though)
 
 dats2
 lomehif<-factor(lomehi,levels=c("lo","me","hi"))
@@ -51,13 +52,6 @@ plotCI(barplot(m1$x,names.arg=m1$Group.1),m1$x,uiw=se1$x,add=T,pch=NA)
 
 
 
-
-
-######Rarefaction######
-dats2r = rarefy_even_depth(dats2)
-dats2rr = transform_sample_counts(dats2r, function(x) x/sum(x))
-?make_network
-#taxa_sums(dats2rr)#just sums OTUs in all samples
 
 
 

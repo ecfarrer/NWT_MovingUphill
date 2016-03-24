@@ -106,15 +106,14 @@ map<-import_qiime_sample_data("/Users/farrer/Dropbox/EmilyComputerBackup/Documen
 dat<-merge_phyloseq(otufile,map)
 
 
-XXXXXXXXX add tree file when fastree stops
-treefile <- read_tree("talus_euks_sinaaln_rep_set.tre")
-plot(treefile)
 
-dat<-merge_phyloseq(otufile,map,treefile)
-  
-talus <-merge_phyloseq(otufile,map,treefile)
-#taxtable<-as.data.frame(run1@tax_table)
-#taxtable2<-taxtable %>% separate(Rank1, c("r1", "r2","r3","r4","r5","r6","r7","r8","r9","r10","r11","r13"), "_", extra="merge")
+
+#XXXXXXXXX add tree file when fastree stops
+#This has not yet been integrated into dat
+treefile <- read_tree("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Euk_ALL_truncate_97_sinaaln_rep_set.tre")
+plot(treefile) #takes a long time
+
+dattree<-merge_phyloseq(otufile,map,treefile) #takes a long time, maybe 30 min to 1 hr
 
 
 myTaxa = names(sort(taxa_sums(talus), decreasing = TRUE)[1:10])
@@ -136,7 +135,7 @@ p
 distmatp<-UniFrac(talus,weighted=TRUE)
 distmatp2<-UniFrac(talus,weighted=TRUE,normalized=FALSE)#this produces the output from the qiime code, the axis percent varience explained are slightly different from qiime, probably b/c how they deal with negative eigenvalues. here it is eig/total
 
-
+##############
 
 
 
@@ -301,9 +300,10 @@ dats10
 min(sample_sums(dats10)) #need to rarefy to 1236 reads
 dats10otu<-cbind(sample_data(dats2),t(otu_table(dats10)))
 head(dats10otu)[,1:40]
-
-
-
+dats10r<-rarefy_even_depth(dats10,sample.size=min(sample_sums(dats10)),rngseed=10,replace=F)#rarefy dats10 for betadiversity metrics, 12 OTUS were removed because thye were no longer present in any sample after rarefaction
+#nice, this is the same exact rarefaction as the comm.data
+head(comm.data)[,28:50]
+head(t(otu_table(dats10r)))[,1:30]
 
 
 
