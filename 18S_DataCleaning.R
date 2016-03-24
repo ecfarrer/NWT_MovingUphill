@@ -1,8 +1,10 @@
 
 setwd("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/NWT_MovingUphill")
+setwd("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/")
 
 save.image("~/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/MovingUphill_Workspace_Cleaning.Rdata")
 load("~/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/MovingUphill_Workspace_Cleaning.Rdata")
+
 
 #######Read in OTU data#######
 library(phyloseq)
@@ -104,7 +106,7 @@ map<-import_qiime_sample_data("/Users/farrer/Dropbox/EmilyComputerBackup/Documen
 dat<-merge_phyloseq(otufile,map)
 
 
-XXXXXXXXX
+XXXXXXXXX add tree file when fastree stops
 treefile <- read_tree("talus_euks_sinaaln_rep_set.tre")
 plot(treefile)
 
@@ -215,16 +217,24 @@ head(dats2taxm)
 head(tax_table(dats2))
 tax_table(dats2)<-dats2taxm
 
+dats2otu<-cbind(sample_data(dats2),t(otu_table(dats2)))
+head(dats2otu)[,1:10]
+
+#dat2 is the final data file for diversity analyses. the only thing removed are plants and otus with only one read (which is likely error)
 
 
-#remove doubletons and singletons, taxa present in only 1 or 2 samples
+
+
+
+#Then remove more rare taxa which will create a datset for network analysis
+#Remove doubletons and singletons, taxa present in only 1 or 2 samples
 wh0 = genefilter_sample(dats2, filterfun_sample(function(x) x > 0), A = 3)
 dats3 = prune_taxa(wh0, dats2)
 
-#transform to relative abudance
+#Transform to relative abudance
 #dats3 = transform_sample_counts(dats2, function(x) 100*x/sum(x) )
 
-#aggregate by order, this either removes NAs or groups NAs into one group, it doesn't look at the next highest level of taxonomy
+#One way to aggregate by order, this either removes NAs or groups NAs into one group, it doesn't look at the next highest level of taxonomy
 #dats5<-tax_glom(dats4,"order",NArm=FALSE)
 
 unique(tax_table(dats3)[,"major_clade"])
@@ -233,106 +243,28 @@ unique(tax_table(subset_taxa(dats3,kingdom=="Discoba")))
 
 #dat5<-psmelt(dats4)#this puts it in long format (abundance is a column)
 
+#To create a datset at the order level
 dats3tax<-as.data.frame(tax_table(dats3))
 dats3sample<-as.data.frame(sample_data(dats3))
 dats3otu<-as.data.frame(otu_table(dats3))
-
-#aggregate things by order - first for orders that are NA/uncultured/incertaesedis use class/phylum information in the order colum
-sort(unique(as.character(dats3tax$order)))
-orders<-as.character(dats3tax$order)
-classes<-as.character(dats3tax$class)
-phyla<-as.character(dats3tax$phylum)
-kingdom<-as.character(dats3tax$kingdom)
-indo<-which(orders%in%c("Incertae Sedis","uncultured",NA))
-indc<-which(classes%in%c("Incertae Sedis","uncultured",NA))
-indp<-which(phyla%in%c("Incertae Sedis","uncultured",NA))
-indk<-which(kingdom%in%c("Incertae Sedis","uncultured",NA))
-intersect(indp,indk)#every sample either has a phylum or kingdom
-orders[indo]<-NA
-classes[indc]<-NA
-phyla[indp]<-NA
-kingdom[indk]<-NA
-ind1<-which(is.na(orders)==T&is.na(classes)==F)
-ind2<-which(is.na(orders)==T&is.na(classes)==T&is.na(phyla)==F)
-#ind3<-which(is.na(orders)==T&is.na(classes)==T&is.na(phyla)==T) #not needed, the things without phylum must have had a class/order
-orders[ind1]<-paste("Unclassified",as.character(dats3tax$class[ind1]))
-orders[ind2]<-paste("Unclassified",as.character(dats3tax$phylum[ind2]))
-#orders[ind3]<-paste("Unclassified",as.character(dats4tax$kingdom[ind3]))
-
-head(orders)
-kingdomlabels<-kingdom
-ind<-which(kingdomlabels%in%c("Chloroplastida","Stramenopiles","Rhodophyceae","Haptophyta"))
-kingdomlabels[ind]<-"Archaeplastida"
-ind<-which(kingdomlabels=="Alveolata"&phyla=="Dinoflagellata")
-kingdomlabels[ind]<-"Photosynthetic_Alveolata"
-ind<-which(kingdomlabels=="Alveolata")
-kingdomlabels[ind]<-"Nonphotosynthetic_Alveolata"
-ind<-which(kingdomlabels=="Discoba"&phyla=="Euglenozoa")
-kingdomlabels[ind]<-"Photosynthetic_Discoba"
-ind<-which(kingdomlabels=="Discoba"&phyla=="Heterolobosea")
-kingdomlabels[ind]<-"Nonphotosynthetic_Discoba"
-ind<-which(is.na(kingdomlabels))# two are NA, they are both heterotrophs phyla[which(is.na(kingdomlabels))]
-kingdomlabels[ind]<-"Nonphotosynthetic_Eukaryota"
-
-labelfile<-as.data.frame(cbind(orders,kingdomlabels))
-
-head(dats3tax)
-dats3tax$ordergroup<-orders
-XXXXXXX
 
 head(dats3otu)
 head(dats3sample)
 
 dats4<-cbind(dats3tax,dats3otu)
-dats5<-aggregate.data.frame(dats4[,17:113],by=list(ordergroup=dats4$ordergroup),sum)
+dats5<-aggregate.data.frame(dats4[,18:114],by=list(ordergroup=dats4$ordergroup),sum)
 rownames(dats5)<-dats5$ordergroup
 dats5$ordergroup<-NULL
 dats6<-t(dats5)
 head(dats6)
 
-#the minimum number of reads is 1250, which is pretty high, so right now I'm not rarefying
+#The minimum number of reads is 1250, which is pretty high, so right now I'm not rarefying
 min(rowSums(dats6))
 
 dats6order<-cbind(dats3sample,dats6)
 head(dats6order)
-greater66plants<-factor(ifelse(dats6order$Plant_Dens>66,"hi","lo")) #this is stem density, including mosses
-dats6order<-cbind(greater66plants,dats6order)
 dats6order$Sample_name<-as.numeric(as.character(dats6order$Sample_name))
 
-
-#Read in plant data to merge with order file
-plantcomp<-read.csv("/Users/farrer/Dropbox/Niwot Moving Uphill/Analysis/Niwot_MovingUpHill_comp2015.csv")
-head(plantcomp)
-names(plantcomp)[1]<-"Sample_name"
-
-#Remove plant species only present in one or two plots
-dim(plantcomp)
-plantcomp2<-plantcomp[,colSums(plantcomp>0)>2]
-plantlabels<-as.data.frame(cbind(colnames(plantcomp2)[2:56],"Plant"))
-colnames(plantlabels)<-c("orders","kingdomlabels")
-
-#Merge plants with microbes, plantcomp is everything, plantcomp2 removes doubletons/singletons
-microbplant<-merge(dats6order,plantcomp,"Sample_name",sort=F)
-microbplant2<-merge(dats6order,plantcomp2,"Sample_name",sort=F)
-head(microbplant)
-
-
-
-
-
-
-######Grouping by kingdom#####
-dat7<-data.frame(dats4[,1:16],kingdomlabels,dats4[,17:113])
-
-dat8<-aggregate.data.frame(dat7[,18:114],by=list(kingdomlabels=dat7$kingdomlabels),sum)
-rownames(dat8)<-dat8$kingdomlabels
-dat8$kingdomlabels<-NULL
-dat9<-t(dat8)
-head(dat9)
-dat9kingdom<-cbind(greater66plants,dats3sample,dat9)
-species<-dat9kingdom[,28:38]
-speciesrel<-species/rowSums(species)*100
-m1<-aggregate.data.frame(speciesrel, by=list(greater66plants),mean)
 
 
 
@@ -341,20 +273,78 @@ m1<-aggregate.data.frame(speciesrel, by=list(greater66plants),mean)
 
 
 #####Group things by genus / otu#####
-head(dats3otu)
-dats7otu<-t(dats3otu)
-dats8otu<-cbind(dats3sample,dats7otu)
-dim(dats8otu)
-head(dats8otu)[1:4,1:28]#otus start at column 27
-#Remove otus only present in five or fewer plots
-dats8otuspe<-dats8otu[,27:5042]
-dats9otu<-cbind(dats8otu[,1:26],dats8otuspe[,colSums(dats8otuspe>0)>5])#2455 taxa
-head(dats9otu)[,1:35]
+#First try - Remove otus only present in five or fewer plots
+wh0 = genefilter_sample(dats2, filterfun_sample(function(x) x > 0), A = 6)#2455 taxa
+dats10 = prune_taxa(wh0, dats2)
+dats10
+min(sample_sums(dats10)) #1191 reads
+dats10otu<-cbind(sample_data(dats2),t(otu_table(dats10)))
+head(dats10otu)[,1:40]
 
-#second try, pruning a bit more, need to be in 10 samples
+#Second try, pruning a bit more, need to be in 15 samples
 wh0 = genefilter_sample(dats2, filterfun_sample(function(x) x > 0), A = 15)#1008 taxa
 dats10 = prune_taxa(wh0, dats2)
 dats10
-min(sample_sums(dats10))
+min(sample_sums(dats10)) #need to rarefy to 1121 reads
 dats10otu<-cbind(sample_data(dats2),t(otu_table(dats10)))
 head(dats10otu)[,1:40]
+
+#Third try, trying to be consistent with sample size minimum in the network analysis (my cutoff there is 3 or 4 or 5). Follwing Widder et al 2014 PNAS
+wh0 = genefilter_sample(dats2, filterfun_sample(function(x) x > 0), A = 3)#5016 taxa
+dats10a = prune_taxa(wh0, dats2)
+dats10a
+#transform to relative abundance
+dats10b = transform_sample_counts(dats10a, function(x) x/sum(x) )
+wh0 = filter_taxa(dats10b, function(x) sum(x) > (0.002), prune=F)
+dats10 = prune_taxa(wh0, dats10a)  #2182
+dats10
+min(sample_sums(dats10)) #need to rarefy to 1236 reads
+dats10otu<-cbind(sample_data(dats2),t(otu_table(dats10)))
+head(dats10otu)[,1:40]
+
+
+
+
+
+
+
+######Grouping by kingdom#####
+dats7<-transform_sample_counts(dats2, function(x) 100*x/sum(x) )
+dats8<-otu_table(dats7)
+dats9<-aggregate.data.frame(dats8,by=list(kingdomlabels=kingdomlabels),sum)
+rownames(dats9)<-dats9$kingdomlabels
+dats9$kingdomlabels<-NULL
+dats9kingdom<-cbind(sample_data(dats2),t(dats9))
+
+
+
+
+
+
+
+
+#Haven't done this yet. I did this in the cooccurrencenetworkseuks file
+######Read in plant data to merge with order file######
+#plantcomp<-read.csv("/Users/farrer/Dropbox/Niwot Moving Uphill/Analysis/Niwot_MovingUpHill_comp2015.csv")
+#head(plantcomp)
+#names(plantcomp)[1]<-"Sample_name"
+
+#Remove plant species only present in one or two plots
+#dim(plantcomp)
+#plantcomp2<-plantcomp[,colSums(plantcomp>0)>2]
+#plantlabels<-as.data.frame(cbind(colnames(plantcomp2)[2:56],"Plant"))
+#colnames(plantlabels)<-c("orders","kingdomlabels")
+
+#Merge plants with microbes, plantcomp is everything, plantcomp2 removes doubletons/singletons
+#microbplant<-merge(dats6order,plantcomp,"Sample_name",sort=F)
+#microbplant2<-merge(dats6order,plantcomp2,"Sample_name",sort=F)
+#head(microbplant)
+
+
+
+
+
+
+
+
+
