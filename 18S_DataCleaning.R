@@ -57,6 +57,15 @@ for (i in 1:nrow(tax_table6)){
   }
 }
 
+#checking for duplicate levels of taxonmy
+#none for phylum, kingdom, domain
+#for class, it is fine, all dups are bacteria
+#for order there are 1065, most are plants which I will ignore, 252 are from euks. most are from Collophora which has 'Incertae Sedis' duplicated for "order", which is fine. 1:7 are "Incertae Sedis" "Zoopagales" which is in the correct order. 9:10 are 'Incertae Sedis' duplicated. 10:19 are "Incertae Sedis" "Zoopagales" which is fine. so all are fine
+ind<-which(rowSums(silvamapmatrix=="domain",na.rm=T)>1);ind
+ind<-which((rowSums(silvamapmatrix=="order",na.rm=T)>1)&(rowSums(tax_table7=="Embryophyta",na.rm=T)==0)&(rowSums(tax_table7=="Collophora",na.rm=T)==0));ind
+silvamapmatrix[ind,]
+tax_table7[ind,]
+
 #Make file with just last name from the table6 file
 tax_table7<-matrix(0,nrow=length(tax_table5),ncol=15)
 for (i in 1:length(tax_table5)){
@@ -82,7 +91,8 @@ for(i in 1:nrow(tax_table7)){
   ind2<-which(is.na(ind)==F)
   ind3<-ind[ind2]
   mytaxmatrix[i,ind3]<-tax_table7[i,][ind2]
-}
+} #this is slighly incorrect. I just realized that sometimes there is a row with two items that are called "order". this loop will put the second name in the final mytaxmatrix. I checked above and it looks like this doesnt matter, all the times order is duplicated, it is two "Incertae Sedis", or Incertae Sedis then the correct order.
+
 colnames(mytaxmatrix)<-mytaxlevels
 rownames(mytaxmatrix)<-rownames(tax_table2)
 head(mytaxmatrix)
@@ -93,7 +103,7 @@ mytaxmatrix[which(mytaxmatrix=="0")]<-NA
 #mytaxmatrix[10:50,]
 
 
-#I should do some aggregating for orders and kingdom levels and integrate into mytaxmatrix here. however I only did it below for the 2015 data so I would need to look more closely at it if I wanted to insert it here.
+#I should do some aggregating for orders and kingdom levels and integrate into mytaxmatrix here. however I only did it below for the 2015 data so I would need to look more closely at it if I wanted to insert it here. it actually might not be useful to do the aggregating here since there are still bacteria in the dataset
 
 
 
