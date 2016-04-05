@@ -1,5 +1,7 @@
 #Alpha diversity
 
+library(BiodiversityR) #this requires X11 and takes a while to load, you need to close the window that it opens in rcommander
+
 
 #Dorota says to rarefy data first before calculating alpha diversity
 #I can also do multiple rarefactions and then take the mean for each "treatment"
@@ -31,9 +33,9 @@ stopCluster(cl)
 resultsdiv<-rowSums(resultsalpha[,seq(from=1,to=199,by=2)])/100
 restultsrich<-rowSums(resultsalpha[,seq(from=2,to=200,by=2)])/100
 
-plot(comm.dataalpha$lomehi,restulsrich)
-plot(comm.dataalpha$Plant_Div,restulsrich)
-plot(comm.dataalpha$Plant_Dens,restulsrich)
+plot(comm.dataalpha$lomehif,restultsrich)
+plot(comm.dataalpha$Plant_Div,restultsrich)
+plot(comm.dataalpha$Plant_Dens,restultsrich)
 
 ggplot(cbind(comm.dataalpha,rich=restultsrich,div=resultsdiv),aes(x=Plant_Div,y=rich))+#as.numeric(fert),color=species
   #scale_y_log10() +##ylim(0,5) +#
@@ -50,13 +52,21 @@ ggplot(cbind(comm.dataalpha,rich=restultsrich,div=resultsdiv),aes(x=Plant_Div,y=
 
 
 ######Make rarefaction curves for samples######
-rarecurve(comm.dataalpha[,-c(1:27)],step=100,xlab="Sample size",ylab="OTU",label=F,col=lomehi)#,sample=rowSums(comm.dataalpha[,-c(1:27)])
+rarecurve(comm.dataalpha[,-c(1:27)],step=100,xlab="Sample size",ylab="OTU",label=F,col=lomehi)#,sample=rowSums(comm.dataalpha[,-c(1:27)]) #takes a few minutes to make
 
 
 
 
+######compare species abundance distributions in lo me hi######
+#comm.data16Sc and comm.dataEukc come from the BetaDiversity.R script
 
+#RankAbun.1 <- rankabundance(dune)
+#rankabunplot(RankAbun.1,scale='abundance', addit=FALSE, specnames=c(1,2,3))
+rankabuncomp(comm.dataEukc[,-c(1:27)], y=comm.dataEukc[,c(1:27)], factor='lomehi', legend=F,xlim=c(1,70),ylim=c(1,2000))#, scale='proportion'
 
+comm.data16Sc
+comm16S.spe
+specnumber(comm.data16Sc[,-c(1:27)])
 
-
+aggregate.data.frame(rowSums(comm16S.spe>0),by=list(comm.data16Sc$lomehi),mean)
 

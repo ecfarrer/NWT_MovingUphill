@@ -91,5 +91,15 @@ edge_listsKS32p$qval<-p.adjust(edge_listsKS32p$spearmanp.value,method="fdr")
 edge_listsKS32pb<-subset(edge_listsKS32p,spearmanrho>0)
 head(edge_listsKS32pb)
 
+edge_listsBEP<-cbind(pairs=paste(resultsBEP$taxa1,resultsBEP$taxa2),resultsBEP)
+edge_listsBEP$qval<-p.adjust(edge_listsBEP$spearmanp.value,method="fdr")
+
+edge_listsBEPb<-subset(edge_listsBEP,ab1freq>10&ab2freq>10)
+edge_listsBEPb$qval<-p.adjust(edge_listsBEPb$spearmanp.value,method="fdr")
+edge_listsBEPc<-subset(edge_listsBEPb,spearmanrho>0)
+dim(edge_listsBEPc)
+
+
+
 
 

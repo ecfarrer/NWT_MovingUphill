@@ -1,8 +1,91 @@
 
-
+library(dplyr)
 
 ######Bray-curtis BetaDiversity######
 
+#These are rarefied but nothing else
+comm.dataEuk[,1:30]
+comm.data16S[,1:30]
+
+#First take out samples that did not amplify in one or other dataset: euks sample 81 did not amplify. for bacteria, samples 126, 5, 34 did not amplify.
+#then sort them both so they are in the same order
+comm.dataEukb<-comm.dataEuk%>%
+  filter(Sample_name!=5&Sample_name!=34&Sample_name!=81&Sample_name!=126)%>%
+  arrange(Sample_name)
+comm.data16Sb<-comm.data16S%>%
+  filter(Sample_name!=5&Sample_name!=34&Sample_name!=81&Sample_name!=126)%>%
+  arrange(Sample_name)
+
+#Calculate lo me hi and put in front of each data.frame
+lomehi2<-ifelse(comm.dataEukb$Plant_Dens<36,"lo","else");lomehi2[which(comm.dataEukb$Plant_Dens<89&comm.dataEukb$Plant_Dens>=36)]<-"me";lomehi2[which(comm.dataEukb$Plant_Dens>=89)]<-"hi";lomehi2<-factor(lomehi2, levels=c("lo","me","hi"))
+lomehi2
+
+comm.dataEukc<-cbind(lomehi=lomehi2,comm.dataEukb)
+comm.data16Sc<-cbind(lomehi=lomehi2,comm.data16Sb)
+
+#separate species
+#euks & 16S
+commEuk.spe<-comm.dataEukc[,28:dim(comm.dataEukc)[2]]
+commEuk.spelo<-subset(commEuk.spe,lomehi2=="lo")
+commEuk.speme<-subset(commEuk.spe,lomehi2=="me")
+commEuk.spehi<-subset(commEuk.spe,lomehi2=="hi")
+comm16S.spe<-comm.data16Sc[,28:dim(comm.data16Sc)[2]]
+comm16S.spelo<-subset(comm16S.spe,lomehi2=="lo")
+comm16S.speme<-subset(comm16S.spe,lomehi2=="me")
+comm16S.spehi<-subset(comm16S.spe,lomehi2=="hi")
+
+otuEuklo<-colnames(commEuk.spelo)[(which(colSums(commEuk.spelo)>0))]
+otuEukme<-colnames(commEuk.speme)[(which(colSums(commEuk.speme)>0))]
+otuEukhi<-colnames(commEuk.spehi)[(which(colSums(commEuk.spehi)>0))]
+length(intersect(otuEukme,otuEuklo))/length(union(otuEukme,otuEuklo))
+length(intersect(otuEukhi,otuEukme))/length(union(otuEukhi,otuEukme))
+length(intersect(otuEukhi,otuEuklo))/length(union(otuEukhi,otuEuklo))
+
+otu16Slo<-colnames(comm16S.spelo)[(which(colSums(comm16S.spelo)>0))]
+otu16Sme<-colnames(comm16S.speme)[(which(colSums(comm16S.speme)>0))]
+otu16Shi<-colnames(comm16S.spehi)[(which(colSums(comm16S.spehi)>0))]
+length(intersect(otu16Sme,otu16Slo))/length(union(otu16Sme,otu16Slo))
+length(intersect(otu16Shi,otu16Sme))/length(union(otu16Shi,otu16Sme))
+length(intersect(otu16Shi,otu16Slo))/length(union(otu16Shi,otu16Slo))
+
+
+
+aggregate.data.frame(specnumber(comm.dataEukc[,-c(1:27)]),by=list(lomehi2),mean)
+aggregate.data.frame(specnumber(comm.data16Sc[,-c(1:27)]),by=list(lomehi2),mean)
+
+
+#over lap in abundance/frequent species
+#euks & 16S
+comm16S.spelo2<-comm16S.spelo[,which(colSums(comm16S.spelo>0)>10)]
+comm16S.speme2<-comm16S.speme[,which(colSums(comm16S.speme>0)>10)]
+comm16S.spehi2<-comm16S.spehi[,which(colSums(comm16S.spehi>0)>10)]
+
+
+otuEuklo<-colnames(commEuk.spelo)[(which(colSums(commEuk.spelo)>0))]
+otuEukme<-colnames(commEuk.speme)[(which(colSums(commEuk.speme)>0))]
+otuEukhi<-colnames(commEuk.spehi)[(which(colSums(commEuk.spehi)>0))]
+length(intersect(otuEukme,otuEuklo))/length(union(otuEukme,otuEuklo))
+length(intersect(otuEukhi,otuEukme))/length(union(otuEukhi,otuEukme))
+length(intersect(otuEukhi,otuEuklo))/length(union(otuEukhi,otuEuklo))
+
+otu16Slo<-colnames(comm16S.spelo)[(which(colSums(comm16S.spelo)>0))]
+otu16Sme<-colnames(comm16S.speme)[(which(colSums(comm16S.speme)>0))]
+otu16Shi<-colnames(comm16S.spehi)[(which(colSums(comm16S.spehi)>0))]
+length(intersect(otu16Sme,otu16Slo))/length(union(otu16Sme,otu16Slo))
+length(intersect(otu16Shi,otu16Sme))/length(union(otu16Shi,otu16Sme))
+length(intersect(otu16Shi,otu16Slo))/length(union(otu16Shi,otu16Slo))
+
+
+
+aggregate.data.frame(specnumber(comm.dataEukc[,-c(1:27)]),by=list(lomehi2),mean)
+aggregate.data.frame(specnumber(comm.data16Sc[,-c(1:27)]),by=list(lomehi2),mean)
+
+
+
+
+
+
+#Only euk data
 head(comm.data)[,1:30] #make sure comm.data has nohilo as the first column
 dim(comm.data)
 
@@ -30,6 +113,7 @@ gamma/alpha - 1
 
 
 ######Taxonomic overlap######
+
 dim(comm.spehi)
 
 #Jaccard SJ = a/(a + b + c)

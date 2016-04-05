@@ -129,12 +129,58 @@ dattree<-merge_phyloseq(otufile,map,treefile) #takes a long time, maybe 30 min t
 dat16Ss<-subset_samples(dat16S, SampleType=="soil"&year=="2015")
 
 #take euks out
-dats16S2<-subset_taxa(dat16Ss,domain%in%c("Archaea","Bacteria")&family!="mitochondria"&class!="Chloroplast")
+dat16Ss2<-subset_taxa(dat16Ss,domain%in%c("Archaea","Bacteria")&family!="mitochondria"&class!="Chloroplast")
 
 #Renaming and organizing orders and kingdoms here, then replace the tax table in dats2 to include these new groupings
-dats16S2tax<-as.data.frame(tax_table(dats16S2))
-dim(dats16S2tax)
+dat16Ss2tax<-as.data.frame(tax_table(dat16Ss2))
+dim(dat16Ss2tax)
 
-#all samples have a domain and a phylum and a class. no kingdoms and there are NAs for order
-unique(dats16S2tax$class)
+
+#all samples have a domain and a phylum and a class (although one level is "unknown class"). no kingdoms and there are NAs for order 
+#I'm going to skip the labels for order right now
+sort(unique(dat16Ss2tax$phylum))
+#photosynthetic phyla are Chloroflexi and Cyanobacteria
+photbac<-ifelse(tax_table(dat16Ss2)[,"phylum"]%in%c("Chloroflexi","Cyanobacteria"),"PhotosyntheticBacteria","NonphotosyntheticBacteria")
+bacterialabels<-data.frame(cbind(otu=rownames(tax_table(dat16Ss2)),orders=tax_table(dat16Ss2)[,"phylum"],kingdomlables=photbac));colnames(bacterialabels)<-c("otu","orders","kingdomlabels")
+head(bacterialabels)
+
+
+#Then remove more rare taxa which will create a datset for network analysis
+
+#Beginning of code for order groups
+#Remove doubletons and singletons, taxa present in only 1 or 2 samples
+wh0 = genefilter_sample(dat16Ss2, filterfun_sample(function(x) x > 0), A = 3)
+dat16Ss3 = prune_taxa(wh0, dat16Ss2)
+
+
+
+#####Group things by genus / otu#####
+#Third try, trying to be consistent with sample size minimum in the network analysis (my cutoff there is 3 or 4 or 5). Follwing Widder et al 2014 PNAS
+wh0 = genefilter_sample(dat16Ss2, filterfun_sample(function(x) x > 0), A = 3)#30635 taxa
+dat16Ss10a = prune_taxa(wh0, dat16Ss2)
+dat16Ss10a
+#transform to relative abundance
+dat16Ss10b = transform_sample_counts(dat16Ss10a, function(x) x/sum(x) )
+wh0 = filter_taxa(dat16Ss10b, function(x) sum(x) > (0.002), prune=F)
+dat16Ss10c = prune_taxa(wh0, dat16Ss10a)  #3019
+dat16Ss10c
+sort(sample_sums(dat16Ss10c)) #need to take out samples 34, 5, 126 because they had less than 30 total reads and need to rarefy the rest to 4896 reads
+dat16Ss10 = prune_samples(names(which(sample_sums(dat16Ss10c) >= 200)), dat16Ss10c)
+
+dat16Ss10otu<-cbind(sample_data(dat16Ss10),t(otu_table(dat16Ss10)))
+head(dat16Ss10otu)[,1:40]
+dim(dat16Ss10otu)
+
+dat16Ss10r<-rarefy_even_depth(dat16Ss10,sample.size=min(sample_sums(dat16Ss10)),rngseed=10,replace=F)#rarefy dats10 for betadiversity metrics, 12 OTUS were removed because thye were no longer present in any sample after rarefaction
+#nice, this is the same exact rarefaction as the comm.data
+#head(comm.data)[,28:50]
+#head(t(otu_table(dats10r)))[,1:30]
+
+
+
+
+
+
+
+
 
