@@ -86,20 +86,22 @@ edge_listsKS32no2<-cbind(pairs=paste(resultsKS32no2$taxa1,resultsKS32no2$taxa2),
 edge_listsKS32no2$qval<-p.adjust(edge_listsKS32no2$spearmanp.value,method="fdr")
 edge_listsKS32no2b<-subset(edge_listsKS32no2,spearmanrho>0)
 
-edge_listsKS32p<-cbind(pairs=paste(resultsKS32p$taxa1,resultsKS32p$taxa2),resultsKS32p)
+edge_listsKS32p<-cbind(pairs=paste(resultsKS32p$taxa1,resultsKS32p$taxa2),resultsKS32p)#the frequency cutoff was >2 *I think*, this was done within the loop so not here
 edge_listsKS32p$qval<-p.adjust(edge_listsKS32p$spearmanp.value,method="fdr")
 edge_listsKS32pb<-subset(edge_listsKS32p,spearmanrho>0)
 head(edge_listsKS32pb)
+
 
 edge_listsBEP<-cbind(pairs=paste(resultsBEP$taxa1,resultsBEP$taxa2),resultsBEP)
 edge_listsBEP$qval<-p.adjust(edge_listsBEP$spearmanp.value,method="fdr")
 
 edge_listsBEPb<-subset(edge_listsBEP,ab1freq>10&ab2freq>10)
+#edge_listsBEPb<-subset(edge_listsBEP,ab1freq>5&ab2freq>5)
 edge_listsBEPb$qval<-p.adjust(edge_listsBEPb$spearmanp.value,method="fdr")
 edge_listsBEPc<-subset(edge_listsBEPb,spearmanrho>0)
 dim(edge_listsBEPc)
-
-
-
+min(edge_listsBEPc$ab2freq)
+dim(subset(edge_listsBEPc,trt=="hi"))
+#dim(comm16S.spelo2)[2]+dim(commEuk.spelo2)[2]
 
 

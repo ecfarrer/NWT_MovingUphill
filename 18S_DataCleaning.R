@@ -123,7 +123,7 @@ dat<-merge_phyloseq(otufile,map)
 treefile <- read_tree("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Euk_ALL_truncate_97_sinaaln_rep_set.tre")
 plot(treefile) #takes a long time
 
-dattree<-merge_phyloseq(otufile,map,treefile) #takes a long time, maybe 30 min to 1 hr
+dattree<-merge_phyloseq(otufile,map,treefile) #takes a long time, maybe 30 min to 1 hr. I lose 23,855 taxa when I merge the treefile, I assume this is because some samples could not be aligned?
 
 
 myTaxa = names(sort(taxa_sums(talus), decreasing = TRUE)[1:10])
@@ -156,9 +156,13 @@ distmatp2<-UniFrac(talus,weighted=TRUE,normalized=FALSE)#this produces the outpu
 
 ######Soil data from 2015######
 dats<-subset_samples(dat, SampleType=="soil"&year=="2015")
+datst<-subset_samples(dattree, SampleType=="soil"&year=="2015")
 
 #take plants out
 dats2<-subset_taxa(dats,domain=="Eukaryota"&class!="Embryophyta")
+dats2t<-subset_taxa(datst,domain=="Eukaryota"&class!="Embryophyta")
+dats2tr<-rarefy_even_depth(dats2t,sample.size=min(sample_sums(dats2t)),rngseed=10,replace=F)#rarefy to 761, this is quite low
+pdEuk<-pd(as.matrix(as.data.frame(t(otu_table(dats2tr)))), phy_tree(dats2tr), include.root=TRUE) #takes a few minutes
 
 #Renaming and organizing orders and kingdoms here, then replace the tax table in dats2 to include these new groupings
 dats2tax<-as.data.frame(tax_table(dats2))
@@ -229,7 +233,7 @@ tax_table(dats2)<-dats2taxm
 dats2otu<-cbind(sample_data(dats2),t(otu_table(dats2)))
 head(dats2otu)[,1:10]
 
-#dat2 is the final data file for diversity analyses. the only thing removed are plants and otus with only one read (which is likely error)
+#dats2 is the final data file for diversity analyses. the only thing removed are plants and otus with only one read (which is likely error)
 
 
 

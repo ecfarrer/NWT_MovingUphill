@@ -2,6 +2,7 @@
 library(phyloseq)
 library(foreach)
 library(doParallel)
+library(data.table)
 packageVersion("phyloseq")
 
 #Read in biom file, with singletons removed
@@ -143,6 +144,18 @@ sort(unique(dat16Ss2tax$phylum))
 photbac<-ifelse(tax_table(dat16Ss2)[,"phylum"]%in%c("Chloroflexi","Cyanobacteria"),"PhotosyntheticBacteria","NonphotosyntheticBacteria")
 bacterialabels<-data.frame(cbind(otu=rownames(tax_table(dat16Ss2)),orders=tax_table(dat16Ss2)[,"phylum"],kingdomlables=photbac));colnames(bacterialabels)<-c("otu","orders","kingdomlabels")
 head(bacterialabels)
+
+#take out samples 34, 5, 126 because they had less than 30 total reads
+dat16Ss2a = prune_samples(names(which(sample_sums(dat16Ss2) >= 200)), dat16Ss2)
+dat16Ss2a_s<-sample_data(dat16Ss2a)
+dat16Ss2a_o<-t(otu_table(dat16Ss2a))
+
+#this file is too large to use cbind. online it was suggested to use data.table to store and manipulate large datasets, however it has a whole different syntax than data.frames
+#dat16Ss2b<-cbind(dat16Ss2a_s,dat16Ss2a_ot)
+#dat16Ss2a_st<-data.table(dat16Ss2a_s,keep.rownames = T)
+#dat16Ss2otu<-cbind(sample_data(dat16Ss2a),t(otu_table(dat16Ss2a)))#takes too long
+
+#dat16Ss2a, dat16Ss2a_s, dat16Ss2a_o is the final data file for diversity analyses. the only thing removed are plants/chloroplasts/mitochondria and otus with only one read (which is likely error). also removed are the three samples which didn't amplify
 
 
 #Then remove more rare taxa which will create a datset for network analysis

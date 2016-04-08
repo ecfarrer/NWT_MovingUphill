@@ -83,12 +83,12 @@ hist(inputnov$p.value,freq=F,xlim=c(0,.1),breaks=1000)
 
 edge_listsKSno4b,edge_listsKS32no2b edge_listsKS32pb edge_listsBEPc# fdr correction on all spearman pvalues, and subset to only positive spearman rhos 
 
-inputlov<-subset(edge_listsBEPc,qval<.005&spearmanrho>.7&trt=="lo")
-inputmev<-subset(edge_listsBEPc,qval<.005&spearmanrho>.7&trt=="me")
-inputhiv<-subset(edge_listsBEPc,qval<.005&spearmanrho>.7&trt=="hi")
-#inputhiv<-subset(edge_listsKS32no2b,qval<.05&trt=="hi")
-#inputmev<-subset(edge_listsKS32no2b,qval<.05&trt=="me")
-#inputlov<-subset(edge_listsKS32no2b,qval<.05&trt=="lo")
+inputlov<-subset(edge_listsBEPc,qval<.01&spearmanrho>.65&trt=="lo")
+inputmev<-subset(edge_listsBEPc,qval<.01&spearmanrho>.65&trt=="me")
+inputhiv<-subset(edge_listsBEPc,qval<.01&spearmanrho>.65&trt=="hi")
+dim(inputlov)
+dim(inputmev)
+dim(inputhiv)
 
 graphlo<-simplify(graph.edgelist(as.matrix(inputlov[,3:4]),directed=FALSE))
 graphme<-simplify(graph.edgelist(as.matrix(inputmev[,3:4]),directed=FALSE))
@@ -162,6 +162,10 @@ graph.union(graphlo,graphhi)
 
 graph.intersection(graphme,graphhi)
 graph.union(graphme,graphhi)
+
+#for plant only network (run the graph in the Plotting_Networks scripts)
+graph.intersection(graph1,graph2)
+graph.union(graph1,graph2)
 
 
 #intersection of vertices
