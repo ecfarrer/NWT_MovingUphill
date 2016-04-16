@@ -51,6 +51,8 @@ colnames(plantlabels)<-c("otu","orders","kingdomlabels")
 
 
 
+
+
 #Merge things, for euks sample 81 did not amplify. for bacteria, samples 126, 5, 34 did not amplify. should have 94 samples after merging
 #first merge comm.dataEuk with comm.data16S
 comm.dataEuk$Sample_name<-as.numeric(as.character(comm.dataEuk$Sample_name))

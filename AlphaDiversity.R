@@ -119,9 +119,12 @@ dev.off()
 summary(lm(restultsrich16S~log((comm.dataalpha16S_s$Plant_Dens+1),base=10)))
 
 
-#merge data so Ican graph them on panels
+#merge data so I can graph them on panels
 richdata<-as.data.frame(rbind(cbind(Plant_Dens=comm.dataalpha16S_s$Plant_Dens,rich=restultsrich16S),cbind(Plant_Dens=comm.dataalphaEuk$Plant_Dens,rich=restultsrichEuk)));rownames(richdata)<-1:dim(richdata)[1]
 richdata$type<-factor(rep(c("Bac","Euk"),each=94))
+richdata$lomehi<-comm.dataalpha16S_s$lomehi
+richdata$Sample_name<-comm.dataalphaEuk$Sample_name
+richdata$X.SampleID<-comm.dataalphaEuk$X.SampleID
 
 #I don't think you can set different limits for each panel, for example I'd like them both to have ymin of 0
 pdf("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Figs/microberichnessvsplantdensity.pdf",width=7, height=3.5)
@@ -133,6 +136,45 @@ ggplot(richdata,aes(x=log10(Plant_Dens+1),y=rich))+#as.numeric(fert),color=speci
   geom_smooth(method=lm,se=F,size=.8,color="black") +
   facet_wrap(~type,scales="free")
 dev.off()
+
+
+#aggregate by lomehi so I can make a barplot
+richdata2<- richdata %>% group_by(type,lomehi) %>%
+  summarise(mean_rich = mean(rich),se_rich=std.error(rich))
+
+pdf("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Figs/microberichnessvsplantdensitygroups.pdf",width=7, height=3.5)
+ggplot(richdata2,aes(x=lomehi,y=mean_rich,group=type))+
+  labs(x = "Plant density",y="Richness")+
+  theme_classic()+
+  theme(line=element_line(size=.3),text=element_text(size=12),strip.background = element_rect(colour="white", fill="white"),axis.line=element_line(color="gray30",size=.5))+
+  geom_line(stat = "identity", position = "identity",size=.8)+
+  geom_point(size=3)+
+  geom_errorbar(aes(ymax = mean_rich+se_rich, ymin=mean_rich-se_rich),width=.15,size=.8) +
+  facet_wrap(~type,scales="free")
+dev.off()
+
+
+
+
+
+######Phylogenetic diversity######
+#file is pdEuk from 18S_DataCleaning script
+#need to add bac when server is done
+pdEuk$X.SampleID<-rownames(pdEuk)
+richdataEuk<-subset(richdata,type=="Euk")
+richdataEuk2<-merge(richdataEuk,pdEuk,by="X.SampleID",all.y=F,sort=F)
+
+ggplot(richdataEuk2,aes(x=log10(Plant_Dens+1),y=PD))+#as.numeric(fert),color=species
+  labs(x="Plant density",y="Phylogenetic diversity")+
+  theme_classic()+
+  theme(line=element_line(size=.3),text=element_text(size=12),strip.background = element_rect(colour="white", fill="white"),axis.line=element_line(color="gray30",size=.5))+
+  geom_point(size=1.4)+
+  geom_smooth(method=lm,se=F,size=.8,color="black") +
+  geom_vline(aes(xintercept=log10(36+1)), colour="gray30", linetype="dashed")+
+  geom_vline(aes(xintercept=log10(89+1)), colour="gray30", linetype="dashed")#+facet_wrap(~type,scales="free")
+
+
+
 
 
 
@@ -150,7 +192,6 @@ dev.off()
 comm.dataalpha1<-dats2otu
 min(rowSums(comm.dataalpha1[,-c(1:26)]))
 comm.dataalpha<-cbind(lomehif,comm.dataalpha1)
-
 
 ######Rarefy data 100 times and get mean diversity and richness######
 #Setup parallel backend to use 4 processors

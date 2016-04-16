@@ -118,16 +118,16 @@ dat<-merge_phyloseq(otufile,map)
 
 
 
-#XXXXXXXXX add tree file when fastree stops
+#Add tree file
 #This has not yet been integrated into dat
 treefile <- read_tree("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Euk_ALL_truncate_97_sinaaln_rep_set.tre")
 plot(treefile) #takes a long time
 
-dattree<-merge_phyloseq(otufile,map,treefile) #takes a long time, maybe 30 min to 1 hr. I lose 23,855 taxa when I merge the treefile, I assume this is because some samples could not be aligned?
+dattree<-merge_phyloseq(otufile,map,treefile) #takes a long time, maybe 30 min to 1 hr. I lose 23,855 taxa when I merge the treefile, I assume this is because some samples could not be aligned
 
 
-myTaxa = names(sort(taxa_sums(talus), decreasing = TRUE)[1:10])
-ex1 = prune_taxa(myTaxa, talus)
+myTaxa = names(sort(taxa_sums(dattree), decreasing = TRUE)[1:10])
+ex1 = prune_taxa(myTaxa, dattree)
 plot(phy_tree(ex1), show.node.label = TRUE)
 plot_tree(ex1, color = "Description", label.tips = "phylum", ladderize = "left", size = "Abundance",plot.margin=.8)#,justify = "left"
 

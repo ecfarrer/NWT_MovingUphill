@@ -35,7 +35,24 @@ names(namesEuk)<-"otu"
 namesEukb<-merge(namesEuk,labelfile,"otu",all.y=F)
 
 
-plantcols<-data.frame(kingdomlabels=c("Amoebozoa","Archaeplastida","Discicristoidea","Fungi","Holozoa","Nonphotosynthetic_Alveolata","Nonphotosynthetic_Discoba","Nonphotosynthetic_Eukaryota","Photosynthetic_Alveolata","Photosynthetic_Discoba","Rhizaria","Plant","PhotosyntheticBacteria","NonphotosyntheticBacteria"),color=c("orangered","green","orangered","yellow","red","orangered","orangered","orangered","green","green","orangered","blue","darkgreen","#802b00"))
+#plantcols<-data.frame(kingdomlabels=c("Amoebozoa","Archaeplastida","Discicristoidea","Fungi","Holozoa","Nonphotosynthetic_Alveolata","Nonphotosynthetic_Discoba","Nonphotosynthetic_Eukaryota","Photosynthetic_Alveolata","Photosynthetic_Discoba","Rhizaria","Plant","PhotosyntheticBacteria","NonphotosyntheticBacteria"),color=c("orangered","green","orangered","yellow","red","orangered","orangered","orangered","green","green","orangered","blue","darkgreen","#802b00"))
+
+plantcols<-data.frame(rbind(c("Amoebozoa","#673482"),
+                            c("Discicristoidea","#673482"),
+                            c("Nonphotosynthetic_Alveolata","#673482"),
+                            c("Nonphotosynthetic_Discoba","#673482"),
+                            c("Nonphotosynthetic_Eukaryota","#673482"),
+                            c("Rhizaria","#673482"),
+                            c("Archaeplastida","#466D24"),
+                            c("Photosynthetic_Alveolata","#466D24"),
+                            c("Photosynthetic_Discoba","#466D24"),
+                            c("Fungi","#F6EC32"),
+                            c("Holozoa","red"),
+                            c("Plant","#E95275"),# E976A1
+                            c("PhotosyntheticBacteria","#94BA3C"),
+                            c("NonphotosyntheticBacteria","#7879BC")))
+colnames(plantcols)=c("kingdomlabels","color")
+
 labelsall1<-rbind(cbind(namesEukb,domain=c("euk")),cbind(names16Sb,domain=c("bac")),cbind(plantlabels,domain=c("plant")))
 labelsall<-merge(labelsall1,plantcols,"kingdomlabels")
 labelsall$color<-as.character(labelsall$color)
@@ -43,13 +60,9 @@ labelsall$color<-as.character(labelsall$color)
 
 
 
-
 ###### Plotting ######
 
 #Low density
-inputlo<-subset(edge_listsKS32pb,qval<.05&spearmanrho>.65&trt=="lo")[,3:4]
-inputlo<-subset(edge_listsKSno5b,spearmanrho>=.5&trt=="lo")[,3:4]
-inputlo<-subset(edge_listsKS32no2b,qval<.05&trt=="lo")[,3:4]
 inputlo<-subset(edge_listsBEPc,qval<.01&spearmanrho>.65&trt=="lo")[,3:4]#.6 is the same as .65
 dim(inputlo)
 #inputlov<-subset(edge_listsKS32no2b,qval<.05&trt=="lo")
@@ -73,9 +86,6 @@ plot(graph3,vertex.size=4,vertex.color=colorgraph3$color,vertex.label.cex=.8,ver
 
 
 #Medium density
-inputme<-subset(edge_listsKS32pb,qval<.05&spearmanrho>.65&trt=="me")[,3:4]
-inputme<-subset(edge_listsKSno5b,spearmanrho>=.5&trt=="me")[,3:4]
-inputme<-subset(edge_listsKS32no2b,qval<.05&trt=="me")[,3:4]
 inputme<-subset(edge_listsBEPc,qval<.01&spearmanrho>.65&trt=="me")[,3:4]
 dim(inputme)
 #inputmev<-subset(edge_listsKS32no2b,qval<.05&trt=="me")
@@ -97,10 +107,6 @@ plot(graph2,vertex.size=4,vertex.color=colorgraph2$color,vertex.label.cex=.8,ver
 
 
 #High density
-inputhi<-subset(edge_listsKS32pb,qval<.05&spearmanrho>.65&trt=="hi")[,3:4]#
-inputhi<-subset(edge_listsKSno5b,spearmanrho>=.5&trt=="hi")[,3:4]#
-inputhi<-subset(edge_listsKS32no2b,qval<.05&spearmanrho>.6&trt=="hi")[,3:4]#could use .65 if I want to simplify it
-#inputhi<-subset(edge_listsBEPc,qval<.005&spearmanrho>.7&trt=="hi")[,3:4] #for freq 5 cutoff
 inputhi<-subset(edge_listsBEPc,qval<.01&spearmanrho>.65&trt=="hi")[,3:4]
 dim(inputhi)
 #inputhiv<-subset(edge_listsKS32no2b,qval<.05&trt=="hi")#
@@ -114,7 +120,7 @@ verticesgraph1<-as.data.frame(rownames(as.matrix(V(graph1))))
 colnames(verticesgraph1)<-"otuxy" #change to "order" if doing things by order
 colorgraph1<-merge(verticesgraph1,labelsall,"otuxy",all.y=F,all.x=F,sort=F)
 #sizesgraph1<-merge(verticesgraph1,vertexsizes1,"otuxy",sort=F)
-sizesgraph1<-ifelse(verticesgraph1$otuxy=="denovo559741",6,2)
+#sizesgraph1<-ifelse(verticesgraph1$otuxy=="denovo559741",6,2)
 #pdf("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Figs/hidensityotuplantbaceukf10q.01r.65.pdf") #f=frequency cutoff 5 included, r=rho cutoff .5
 plot(graph1,vertex.size=4,vertex.color=colorgraph1$color,vertex.label.cex=.8,vertex.label.dist=.1,vertex.label.color="black",edge.curved=T,edge.color="gray40",vertex.label=NA)#,vertex.size=log(sizesgraph1$abun)*2
 #dev.off()

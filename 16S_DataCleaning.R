@@ -193,6 +193,15 @@ dat16Ss10r<-rarefy_even_depth(dat16Ss10,sample.size=min(sample_sums(dat16Ss10)),
 
 
 
+######Grouping by phylum#####
+dat16Ss7<-transform_sample_counts(dat16Ss2, function(x) 100*x/sum(x) )
+dat16Ss8<-otu_table(dat16Ss7)
+dat16Ss2tax[,"phylum"]
+dat16Ss9<-aggregate.data.frame(dat16Ss8,by=list(kingdomlabels=dat16Ss2tax[,"phylum"]),sum)
+rownames(dat16Ss9)<-dat16Ss9$kingdomlabels
+dat16Ss9$kingdomlabels<-NULL
+dat16Ss9kingdom<-cbind(sample_data(dat16Ss2),t(dat16Ss9))
+
 
 
 
