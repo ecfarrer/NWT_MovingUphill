@@ -104,4 +104,11 @@ min(edge_listsBEPc$ab2freq)
 dim(subset(edge_listsBEPc,trt=="hi"))
 #dim(comm16S.spelo2)[2]+dim(commEuk.spelo2)[2]
 
+edge_listsN<-cbind(pairs=paste(resultsN$taxa1,resultsN$taxa2),resultsN)
+edge_listsNb<-subset(edge_listsN,ab1freq>6&ab2freq>6)
+edge_listsNb$qval<-p.adjust(edge_listsNb$spearmanp.value,method="fdr")
+edge_listsNc<-subset(edge_listsNb,spearmanrho>0)
+dim(edge_listsNc)
+
+
 

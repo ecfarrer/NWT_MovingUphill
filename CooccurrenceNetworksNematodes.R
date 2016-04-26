@@ -1,10 +1,10 @@
-#correlating the nematode (floating from 10g (?) subsample and then sequenced)
+#correlations including the nematode data (floating from 20g subsample and then sequenced)
 
 
 
 
 #Read in nematode data
-nematodecomp<-read.csv("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Nematode_species.csv")
+nematodecomp<-read.csv("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Nematodes/Nematode_species.csv")
 head(nematodecomp)
 
 #Remove nematodes only present in one or two plots
@@ -13,12 +13,12 @@ nematodecomp2<-nematodecomp[,colSums(nematodecomp>0)>2]
 
 
 #make label file
-nematodelabels1<-read.csv("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Nematode_species_info.csv")
-nematodelabels<-as.data.frame(cbind(as.character(nematodelabels1$otu),as.character(nematodelabels1$otu),as.character(nematodelabels1$Trophic_Group)))
-colnames(nematodelabels)<-c("otu","orders","kingdomlabels")
+nematodelabels1<-read.csv("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Nematodes/Nematode_species_info.csv")
+nematodelabels<-as.data.frame(cbind(as.character(nematodelabels1$otu),as.character(nematodelabels1$NCBI_Taxonomy),as.character(nematodelabels1$Trophic_Group),as.character(nematodelabels1$otu)))
+colnames(nematodelabels)<-c("otu","orders","kingdomlabels","otuxy")
 nematodelabels
 
-#use comm.dataALL from the CooccurrenceNetworksEuksbac.R script and merge iwth nematode community data. There are 92 samples in common between the nematode and the bac/euk sequencing dataset
+#use comm.dataALL from the CooccurrenceNetworksEuksbac.R script and merge with nematode community data. There are 92 samples in common between the nematode and the bac/euk sequencing dataset
 comm.dataALLn<-merge(comm.dataALL,nematodecomp2,"Sample_name",sort=F,all.y=F,all.x=F)
 comm.dataALLn$Sample_name
 head(comm.dataALLn)[,1:30]
@@ -79,9 +79,15 @@ for(a in 1:length(trts)){
 }
 head(results)
 resultsold<-results
-print(Sys.time()-strt) #Euk, bact, plants, took 16.5 hrs with 4 cores
+print(Sys.time()-strt) #nematodes vs Euk, bact, plants, took 7min with 4 cores
 stopCluster(cl)
 
 rownames(resultsold)<-1:dim(resultsold)[1]
 results<-data.frame(resultsold[,1:3],(apply(resultsold[,4:dim(resultsold)[2]],2,as.numeric)))
 names(results)<-c("trt","taxa1","taxa2","spearmanrho","spearmanp.value","kendallrho","kendallp.value","ab1","ab2","ab1freq","ab2freq")
+
+
+head(results)
+
+resultsN<-results
+

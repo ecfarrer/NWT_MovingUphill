@@ -1,5 +1,5 @@
 #Plotting
-#using edge_listsKSno4b or edge_listsKS32no2b - has fdr correction on all spearman pvalues, and subset to only positive spearman rhos
+#using edge_listsBEPc - has fdr correction on all spearman pvalues, and subset to only positive spearman rhos
 
 
 
@@ -50,14 +50,21 @@ plantcols<-data.frame(rbind(c("Amoebozoa","#673482"),
                             c("Holozoa","red"),
                             c("Plant","#E95275"),# E976A1
                             c("PhotosyntheticBacteria","#94BA3C"),
-                            c("NonphotosyntheticBacteria","#7879BC")))
+                            c("NonphotosyntheticBacteria","#7879BC"),
+                            c("AF","red"),
+                            c("AP","red"),
+                            c("BF","black"),
+                            c("FF","gray30"),
+                            c("OM","gray55"),
+                            c("PP","gray80"),
+                            c("RA","white")))
 colnames(plantcols)=c("kingdomlabels","color")
 
-labelsall1<-rbind(cbind(namesEukb,domain=c("euk")),cbind(names16Sb,domain=c("bac")),cbind(plantlabels,domain=c("plant")))
+labelsall1<-rbind(cbind(namesEukb,domain=c("euk")),cbind(names16Sb,domain=c("bac")),cbind(plantlabels,domain=c("plant")),cbind(nematodelabels,domain=c("nematode")))
 labelsall<-merge(labelsall1,plantcols,"kingdomlabels")
 labelsall$color<-as.character(labelsall$color)
 
-
+legend(1,1,c("Heterotrophic bacteria","Photosynthetic bacteria","Heterotrophic eukaryota","Photosynthetic eukaryota","Fungi","Plants","Bacterial feeder","Fungal feeder","Omnivore","Plant parasite","Root associate"),pt.bg=c("#7879BC","#94BA3C","#673482","#466D24","#F6EC32","#E95275","black","gray35","gray55","gray80","white"),bty="n",pch=21,cex=1.4)
 
 
 ###### Plotting ######
@@ -122,10 +129,9 @@ colorgraph1<-merge(verticesgraph1,labelsall,"otuxy",all.y=F,all.x=F,sort=F)
 #sizesgraph1<-merge(verticesgraph1,vertexsizes1,"otuxy",sort=F)
 #sizesgraph1<-ifelse(verticesgraph1$otuxy=="denovo559741",6,2)
 #pdf("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Figs/hidensityotuplantbaceukf10q.01r.65.pdf") #f=frequency cutoff 5 included, r=rho cutoff .5
-plot(graph1,vertex.size=4,vertex.color=colorgraph1$color,vertex.label.cex=.8,vertex.label.dist=.1,vertex.label.color="black",edge.curved=T,edge.color="gray40",vertex.label=NA)#,vertex.size=log(sizesgraph1$abun)*2
+plot(graph1,vertex.size=4,vertex.color=colorgraph1$color,vertex.label.cex=.8,vertex.label.dist=.1,vertex.label.color="black",edge.curved=T,edge.color="gray40",vertex.label=as.character(colorgraph1$orders))#,vertex.size=log(sizesgraph1$abun)*2
 #dev.off()
 #plot(graph1,vertex.size=sizesgraph1,vertex.color=colorgraph1$color,vertex.label.cex=.8,vertex.label.dist=.1,vertex.label.color="black",edge.curved=T,edge.color="gray40",vertex.label=NA)#,vertex.size=log(sizesgraph1$abun)*2
-
 
 
 
@@ -133,7 +139,6 @@ plot(graph1,vertex.size=4,vertex.color=colorgraph1$color,vertex.label.cex=.8,ver
 ##if i want to only plot vertices with >1 edge
 graph3b<-delete_vertices(graph3, which(degree(graph3)<2))
 plot(graph3b,vertex.size=4,vertex.color=colorgraph2$color,vertex.label.cex=.8,vertex.label.dist=.1,vertex.label.color="black",edge.curved=T,edge.color="gray40",vertex.label=NA)#vertex.size=log(sizesgraph3$abun)*2
-
 
 
 temp<-subset(comm.data,greater66plants=="hi")
@@ -161,11 +166,85 @@ taxagraph2c<-data.frame(V1=taxagraph2b$V1,V2=taxagraph2b$V2,taxagraph2b[,3:4])
 
 
 
+
+
+
+
+
+###### Plotting with nematodes######
+
+#####Nematode-microbe interactions#####
+#plot only vertices that are connected to a nematode in all plant densities
+
+#Low density
+inputlo<-subset(edge_listsNc,qval<.05&spearmanrho>.5&trt=="lo")[,3:4]
+dim(inputlo)
+graph3<-simplify(graph.edgelist(as.matrix(inputlo),directed=FALSE))
+verticesgraph3<-as.data.frame(rownames(as.matrix(V(graph3))))
+colnames(verticesgraph3)<-"otuxy"
+colorgraph3<-merge(verticesgraph3,labelsall,"otuxy",all.y=F,all.x=F,sort=F)
+sizegraph3<-ifelse(colorgraph3$domain=="nematode",6,4)
+shapegraph3<-ifelse(colorgraph3$domain=="nematode","square","circle")
+#pdf("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Figs/lodensityotuNf6q.05r.5b.pdf")
+plot(graph3,vertex.size=sizegraph3,vertex.color=colorgraph3$color,vertex.label.cex=.8,vertex.label.dist=.2,vertex.label.color="black",edge.curved=T,edge.color="gray40",vertex.shape=shapegraph3,vertex.label=NA)# vertex.size=log(sizesgraph3$abun)*2 vertex.label=as.character(colorgraph3$orders)
+title("Low density")
+legend(0,1,c("Heterotrophic bacteria","Photosynthetic bacteria","Heterotrophic eukaryota","Photosynthetic eukaryota","Fungi","Plants","Bacterial feeder","Fungal feeder","Omnivore","Plant parasite","Root associate"),pt.bg=c("#7879BC","#94BA3C","#673482","#466D24","#F6EC32","#E95275","black","gray35","gray55","gray80","white"),bty="n",pch=c(rep(21,6),rep(22,5)),cex=.9)
+dev.off()
+
+
+
+#Medium density
+inputme<-subset(edge_listsNc,qval<.05&spearmanrho>.5&trt=="me")[,3:4]
+dim(inputme)
+graph2<-simplify(graph.edgelist(as.matrix(inputme),directed=FALSE))
+verticesgraph2<-as.data.frame(rownames(as.matrix(V(graph2))))
+colnames(verticesgraph2)<-"otuxy"
+colorgraph2<-merge(verticesgraph2,labelsall,"otuxy",all.y=F,all.x=F,sort=F)
+sizegraph2<-ifelse(colorgraph2$domain=="nematode",6,4)
+shapegraph2<-ifelse(colorgraph2$domain=="nematode","square","circle")
+#pdf("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Figs/medensityotuNf6q.05r.5b.pdf")
+plot(graph2,vertex.size=sizegraph2,vertex.color=colorgraph2$color,vertex.label.cex=.8,vertex.label.dist=.2,vertex.label.color="black",edge.curved=T,edge.color="gray40",vertex.shape=shapegraph2,vertex.label=NA)#)#vertex.size=log(sizesgraph2$abun)*2 vertex.label=as.character(colorgraph2$orders)
+title("Medium density")
+#dev.off()
+
+temp<-subset(comm.dataALLn,lomehi=="me")
+cor.test(temp$ndenovo372907,temp$denovo300641,method="spearman",na.action=na.rm)
+plot(rank(temp$ndenovo372907),rank(temp$denovo300641))
+ndenovo361610
+
+
+#High density
+inputhi<-subset(edge_listsNc,qval<.05&spearmanrho>.5&trt=="hi")[,3:4]
+dim(inputhi)
+graph1<-simplify(graph.edgelist(as.matrix(inputhi),directed=FALSE))
+verticesgraph1<-as.data.frame(rownames(as.matrix(V(graph1))))
+colnames(verticesgraph1)<-"otuxy" #change to "order" if doing things by order
+colorgraph1<-merge(verticesgraph1,labelsall,"otuxy",all.y=F,all.x=F,sort=F)
+sizegraph1<-ifelse(colorgraph1$domain=="nematode",6,4)
+shapegraph1<-ifelse(colorgraph1$domain=="nematode","square","circle")
+#pdf("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Figs/hidensityotuNf6q.05r.5b.pdf") #f=frequency cutoff 5 included, r=rho cutoff .5
+plot(graph1,vertex.size=sizegraph1,vertex.color=colorgraph1$color,vertex.label.cex=.8,vertex.label.dist=.2,vertex.label.color="black",edge.curved=T,edge.color="gray40",vertex.shape=shapegraph1,vertex.label=NA)#,vertex.size=log(sizesgraph1$abun)*2 ,vertex.label=as.character(colorgraph1$orders)
+title("High density")
+#dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #####Plant-microbe interactions#####
 #extract only vertices that are connected to a plant in all plant densities to determine if plant correlations are still there
 #figure out why there is more richness in high plant density but the same number of network vertices - is the added diversity all low abundance?
 
-
+#Low density
 inputlo<-subset(edge_listsBEPc,qval<.05&spearmanrho>.5&trt=="lo")[,3:4]
 dim(inputlo)
 inputlo2<-inputlo[which(inputlo$taxa1%in%plantlabels$otu|inputlo$taxa2%in%plantlabels$otu),]
