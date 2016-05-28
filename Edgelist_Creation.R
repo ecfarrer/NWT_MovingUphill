@@ -92,6 +92,8 @@ edge_listsKS32pb<-subset(edge_listsKS32p,spearmanrho>0)
 head(edge_listsKS32pb)
 
 
+
+######Final bacteria, euk, plant network#####
 edge_listsBEP<-cbind(pairs=paste(resultsBEP$taxa1,resultsBEP$taxa2),resultsBEP)
 edge_listsBEP$qval<-p.adjust(edge_listsBEP$spearmanp.value,method="fdr")
 
@@ -104,11 +106,40 @@ min(edge_listsBEPc$ab2freq)
 dim(subset(edge_listsBEPc,trt=="hi"))
 #dim(comm16S.spelo2)[2]+dim(commEuk.spelo2)[2]
 
+#subset euks and proks out of the edge_listsBEP file
+head(names16Sb)
+head(namesEukb)
+plantlabels
+
+edge_listsBEP16S<-edge_listsBEP[which(edge_listsBEP$taxa1%in%c(names16Sb$otuxy,as.character(plantlabels$otuxy))&edge_listsBEP$taxa2%in%c(names16Sb$otuxy,as.character(plantlabels$otuxy))),]
+head(edge_listsBEP16Sb)
+dim(edge_listsBEP16S)
+edge_listsBEP16Sb<-subset(edge_listsBEP16S,ab1freq>10&ab2freq>10)
+edge_listsBEP16Sb$qval<-p.adjust(edge_listsBEP16Sb$spearmanp.value,method="fdr")
+edge_listsBEP16Sc<-subset(edge_listsBEP16Sb,spearmanrho>0)
+
+edge_listsBEPEuk<-edge_listsBEP[which(edge_listsBEP$taxa1%in%c(namesEukb$otuxy,as.character(plantlabels$otuxy))&edge_listsBEP$taxa2%in%c(namesEukb$otuxy,as.character(plantlabels$otuxy))),]
+head(edge_listsBEPEuk)
+dim(edge_listsBEPEuk)
+edge_listsBEPEukb<-subset(edge_listsBEPEuk,ab1freq>6&ab2freq>6)
+edge_listsBEPEukb$qval<-p.adjust(edge_listsBEPEukb$spearmanp.value,method="fdr")
+edge_listsBEPEukc<-subset(edge_listsBEPEukb,spearmanrho>0)
+
+
+#####Nematode correlations######
 edge_listsN<-cbind(pairs=paste(resultsN$taxa1,resultsN$taxa2),resultsN)
 edge_listsNb<-subset(edge_listsN,ab1freq>6&ab2freq>6)
 edge_listsNb$qval<-p.adjust(edge_listsNb$spearmanp.value,method="fdr")
 edge_listsNc<-subset(edge_listsNb,spearmanrho>0)
 dim(edge_listsNc)
+
+#subset euks out from nematodes
+edge_listsNEuk<-edge_listsN[which(edge_listsN$taxa2%in%c(namesEukb$otuxy)),]
+head(edge_listsNEuk)
+dim(edge_listsNEuk)
+edge_listsNEukb<-subset(edge_listsNEuk,ab1freq>3&ab2freq>3)
+edge_listsNEukb$qval<-p.adjust(edge_listsNEukb$spearmanp.value,method="fdr")
+edge_listsNEukc<-subset(edge_listsNEukb,spearmanrho>0)
 
 
 

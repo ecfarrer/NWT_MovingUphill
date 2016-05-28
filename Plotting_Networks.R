@@ -171,13 +171,116 @@ taxagraph2c<-data.frame(V1=taxagraph2b$V1,V2=taxagraph2b$V2,taxagraph2b[,3:4])
 
 
 
-###### Plotting with nematodes######
+##### Plotting only Bacteria subset ######
+
+#Low density
+inputlo<-subset(edge_listsBEP16Sc,qval<.01&spearmanrho>.65&trt=="lo")[,3:4]#
+dim(inputlo)
+
+graph3<-simplify(graph.edgelist(as.matrix(inputlo),directed=FALSE))
+verticesgraph3<-as.data.frame(rownames(as.matrix(V(graph3))))
+colnames(verticesgraph3)<-"otuxy"
+colorgraph3<-merge(verticesgraph3,labelsall,"otuxy",all.y=F,all.x=F,sort=F)
+sizesgraph3<-ifelse(verticesgraph3$otuxy=="denovo559741",5,2)
+#pdf("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Figs/lodensityotuplantbaceukf10q.01r.65.pdf")
+plot(graph3,vertex.size=4,vertex.color=colorgraph3$color,vertex.label.cex=.8,vertex.label.dist=.1,vertex.label.color="black",edge.curved=T,edge.color="gray40",vertex.label=NA)#vertex.size=log(sizesgraph3$abun)*2
+#dev.off()
+#plot(graph3,vertex.size=sizesgraph3,vertex.color=colorgraph3$color,vertex.label.cex=.8,vertex.label.dist=.1,vertex.label.color="black",edge.curved=T,edge.color="gray40",vertex.label=NA)#vertex.size=log(sizesgraph3$abun)*2
+
+
+#Medium density
+inputme<-subset(edge_listsBEP16Sc,qval<.01&spearmanrho>.65&trt=="me")[,3:4]
+dim(inputme)
+graph2<-simplify(graph.edgelist(as.matrix(inputme),directed=FALSE))
+verticesgraph2<-as.data.frame(rownames(as.matrix(V(graph2))))
+colnames(verticesgraph2)<-"otuxy"
+colorgraph2<-merge(verticesgraph2,labelsall,"otuxy",all.y=F,all.x=F,sort=F)
+#sizesgraph2<-merge(verticesgraph2,vertexsizes2,"otuxy",sort=F)
+#pdf("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Figs/medensityotuplantbaceukf10q.01r.65.pdf")
+plot(graph2,vertex.size=4,vertex.color=colorgraph2$color,vertex.label.cex=.8,vertex.label.dist=.1,vertex.label.color="black",edge.curved=T,edge.color="gray40",vertex.label=NA)#vertex.size=log(sizesgraph2$abun)*2
+#dev.off()
+
+
+#High density
+inputhi<-subset(edge_listsBEP16Sc,qval<.01&spearmanrho>.65&trt=="hi")[,3:4]
+dim(inputhi)
+graph1<-simplify(graph.edgelist(as.matrix(inputhi),directed=FALSE))
+verticesgraph1<-as.data.frame(rownames(as.matrix(V(graph1))))
+colnames(verticesgraph1)<-"otuxy" #change to "order" if doing things by order
+colorgraph1<-merge(verticesgraph1,labelsall,"otuxy",all.y=F,all.x=F,sort=F)
+#sizesgraph1<-merge(verticesgraph1,vertexsizes1,"otuxy",sort=F)
+#pdf("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Figs/hidensityotuplantbaceukf10q.01r.65.pdf") #f=frequency cutoff 5 included, r=rho cutoff .5
+plot(graph1,vertex.size=4,vertex.color=colorgraph1$color,vertex.label.cex=.8,vertex.label.dist=.1,vertex.label.color="black",edge.curved=T,edge.color="gray40",vertex.label=NA)#,vertex.size=log(sizesgraph1$abun)*2
+#dev.off()
+#plot(graph1,vertex.size=sizesgraph1,vertex.color=colorgraph1$color,vertex.label.cex=.8,vertex.label.dist=.1,vertex.label.color="black",edge.curved=T,edge.color="gray40",vertex.label=NA)#,vertex.size=log(sizesgraph1$abun)*2
+
+
+
+
+
+
+
+
+
+##### Plotting only Eukaryote subset ######
+
+#Low density
+inputlo<-subset(edge_listsBEPEukc,qval<.05&spearmanrho>.6&trt=="lo")[,3:4]#
+dim(inputlo)
+graph3<-simplify(graph.edgelist(as.matrix(inputlo),directed=FALSE))
+verticesgraph3<-as.data.frame(rownames(as.matrix(V(graph3))))
+colnames(verticesgraph3)<-"otuxy"
+colorgraph3<-merge(verticesgraph3,labelsall,"otuxy",all.y=F,all.x=F,sort=F)
+sizesgraph3<-ifelse(verticesgraph3$otuxy=="denovo559741",5,2)
+#pdf("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Figs/lodensityotuplantbaceukf10q.01r.65.pdf")
+plot(graph3,vertex.size=4,vertex.color=colorgraph3$color,vertex.label.cex=.8,vertex.label.dist=.1,vertex.label.color="black",edge.curved=T,edge.color="gray40",vertex.label=NA)#vertex.size=log(sizesgraph3$abun)*2
+#dev.off()
+#plot(graph3,vertex.size=sizesgraph3,vertex.color=colorgraph3$color,vertex.label.cex=.8,vertex.label.dist=.1,vertex.label.color="black",edge.curved=T,edge.color="gray40",vertex.label=NA)#vertex.size=log(sizesgraph3$abun)*2
+
+
+#Medium density
+inputme<-subset(edge_listsBEPEukc,qval<.05&spearmanrho>.6&trt=="me")[,3:4]
+dim(inputme)
+graph2<-simplify(graph.edgelist(as.matrix(inputme),directed=FALSE))
+verticesgraph2<-as.data.frame(rownames(as.matrix(V(graph2))))
+colnames(verticesgraph2)<-"otuxy"
+colorgraph2<-merge(verticesgraph2,labelsall,"otuxy",all.y=F,all.x=F,sort=F)
+#sizesgraph2<-merge(verticesgraph2,vertexsizes2,"otuxy",sort=F)
+#pdf("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Figs/medensityotuplantbaceukf10q.01r.65.pdf")
+plot(graph2,vertex.size=4,vertex.color=colorgraph2$color,vertex.label.cex=.8,vertex.label.dist=.1,vertex.label.color="black",edge.curved=T,edge.color="gray40",vertex.label=NA)#vertex.size=log(sizesgraph2$abun)*2
+#dev.off()
+
+
+#High density
+inputhi<-subset(edge_listsBEPEukc,qval<.05&spearmanrho>.6&trt=="hi")[,3:4]
+dim(inputhi)
+graph1<-simplify(graph.edgelist(as.matrix(inputhi),directed=FALSE))
+verticesgraph1<-as.data.frame(rownames(as.matrix(V(graph1))))
+colnames(verticesgraph1)<-"otuxy" #change to "order" if doing things by order
+colorgraph1<-merge(verticesgraph1,labelsall,"otuxy",all.y=F,all.x=F,sort=F)
+#sizesgraph1<-merge(verticesgraph1,vertexsizes1,"otuxy",sort=F)
+#pdf("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Figs/hidensityotuplantbaceukf10q.01r.65.pdf") #f=frequency cutoff 5 included, r=rho cutoff .5
+plot(graph1,vertex.size=4,vertex.color=colorgraph1$color,vertex.label.cex=.8,vertex.label.dist=.1,vertex.label.color="black",edge.curved=T,edge.color="gray40",vertex.label=NA)#,vertex.size=log(sizesgraph1$abun)*2
+#dev.off()
+#plot(graph1,vertex.size=sizesgraph1,vertex.color=colorgraph1$color,vertex.label.cex=.8,vertex.label.dist=.1,vertex.label.color="black",edge.curved=T,edge.color="gray40",vertex.label=NA)#,vertex.size=log(sizesgraph1$abun)*2
+
+
+
+
+
+
+
+
+
+
+
+###### Plotting with nematodes ######
 
 #####Nematode-microbe interactions#####
 #plot only vertices that are connected to a nematode in all plant densities
 
 #Low density
-inputlo<-subset(edge_listsNc,qval<.05&spearmanrho>.5&trt=="lo")[,3:4]
+inputlo<-subset(edge_listsNEukc,qval<.05&spearmanrho>.5&trt=="lo")[,3:4]
 dim(inputlo)
 graph3<-simplify(graph.edgelist(as.matrix(inputlo),directed=FALSE))
 verticesgraph3<-as.data.frame(rownames(as.matrix(V(graph3))))
@@ -194,13 +297,13 @@ dev.off()
 
 
 #Medium density
-inputme<-subset(edge_listsNc,qval<.05&spearmanrho>.5&trt=="me")[,3:4]
+inputme<-subset(edge_listsNEukc,qval<.05&spearmanrho>.5&trt=="me")[,3:4]
 dim(inputme)
 graph2<-simplify(graph.edgelist(as.matrix(inputme),directed=FALSE))
 verticesgraph2<-as.data.frame(rownames(as.matrix(V(graph2))))
 colnames(verticesgraph2)<-"otuxy"
 colorgraph2<-merge(verticesgraph2,labelsall,"otuxy",all.y=F,all.x=F,sort=F)
-sizegraph2<-ifelse(colorgraph2$domain=="nematode",6,4)
+sizegraph2<-ifelse(colorgraph2$domain=="nematode",8,6)
 shapegraph2<-ifelse(colorgraph2$domain=="nematode","square","circle")
 #pdf("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Figs/medensityotuNf6q.05r.5b.pdf")
 plot(graph2,vertex.size=sizegraph2,vertex.color=colorgraph2$color,vertex.label.cex=.8,vertex.label.dist=.2,vertex.label.color="black",edge.curved=T,edge.color="gray40",vertex.shape=shapegraph2,vertex.label=NA)#)#vertex.size=log(sizesgraph2$abun)*2 vertex.label=as.character(colorgraph2$orders)
@@ -214,13 +317,13 @@ ndenovo361610
 
 
 #High density
-inputhi<-subset(edge_listsNc,qval<.05&spearmanrho>.5&trt=="hi")[,3:4]
+inputhi<-subset(edge_listsNEukc,qval<.05&spearmanrho>.5&trt=="hi")[,3:4]
 dim(inputhi)
 graph1<-simplify(graph.edgelist(as.matrix(inputhi),directed=FALSE))
 verticesgraph1<-as.data.frame(rownames(as.matrix(V(graph1))))
 colnames(verticesgraph1)<-"otuxy" #change to "order" if doing things by order
 colorgraph1<-merge(verticesgraph1,labelsall,"otuxy",all.y=F,all.x=F,sort=F)
-sizegraph1<-ifelse(colorgraph1$domain=="nematode",6,4)
+sizegraph1<-ifelse(colorgraph1$domain=="nematode",8,6)#was 6,4
 shapegraph1<-ifelse(colorgraph1$domain=="nematode","square","circle")
 #pdf("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Figs/hidensityotuNf6q.05r.5b.pdf") #f=frequency cutoff 5 included, r=rho cutoff .5
 plot(graph1,vertex.size=sizegraph1,vertex.color=colorgraph1$color,vertex.label.cex=.8,vertex.label.dist=.2,vertex.label.color="black",edge.curved=T,edge.color="gray40",vertex.shape=shapegraph1,vertex.label=NA)#,vertex.size=log(sizesgraph1$abun)*2 ,vertex.label=as.character(colorgraph1$orders)

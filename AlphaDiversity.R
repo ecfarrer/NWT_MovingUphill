@@ -1,6 +1,6 @@
 #Alpha diversity
 
-library(BiodiversityR) #this requires X11 and takes a while to load, you need to close the window that it opens in rcommander
+#library(BiodiversityR) #this requires X11 and takes a while to load, you need to close the window that it opens in rcommander
 library(picante)
 
 #Dorota says to rarefy data first before calculating alpha diversity. then she said maybe not rarefy on anything because we do so much standardization in the lab protocol that number differences likely mean something
@@ -158,12 +158,43 @@ dev.off()
 
 
 ######Phylogenetic diversity######
-#file is pdEuk from 18S_DataCleaning script
+#file is pdEuk from 18S_DataCleaning script and pd16S
 #need to add bac when server is done
 pdEuk$X.SampleID<-rownames(pdEuk)
 richdataEuk<-subset(richdata,type=="Euk")
 richdataEuk2<-merge(richdataEuk,pdEuk,by="X.SampleID",all.y=F,sort=F)
 
+pd16S$X.SampleID<-rownames(pd16S)
+richdataBac<-subset(richdata,type=="Bac")
+richdataBac2<-merge(richdataBac,pd16S,by="X.SampleID",all.y=F,sort=F)
+
+pdN<-read.delim("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Nematodes/Euk_Nema_truncate_99_alphadiv.txt",row.names = 1)
+temp<-t(as.data.frame(strsplit(rownames(pdN),"[.]")))
+temp2<-paste("S",temp[,2],temp[,3],sep=".")
+pdN$X.SampleID<-temp2
+pdN2<-merge(richdataEuk2[,1:6],pdN,all.x = F,all.y = F,sort=F) #
+pdN3<-cbind(pdN2[,1:6],PD=pdN2$PD_whole_tree,SR=NA)
+pdN3$type<-"Nematode"
+pdN3$rich<-NA
+
+richdata3<-rbind(richdataEuk2,richdataBac2,pdN3)
+
+#fig with euks and bac
+pdf("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Figs/microbeNPDvsplantdensity.pdf",width=7, height=3) #for two panels width=7, height=3.5)
+ggplot(richdata3,aes(x=log10(Plant_Dens+1),y=PD))+#as.numeric(fert),color=species
+  labs(x="Plant density",y="Phylogenetic diversity")+
+  theme_classic()+
+  theme(line=element_line(size=.3),text=element_text(size=12),strip.background = element_rect(colour="white", fill="white"),axis.line=element_line(color="gray30",size=.5))+
+  geom_point(size=1.4)+
+  geom_smooth(method=lm,se=F,size=.8,color="black") +
+  facet_wrap(~type,scales="free")
+dev.off()
+
+summary(lm(richdataBac2$PD~log((richdataBac2$Plant_Dens+1),base=10)))
+summary(lm(richdataEuk2$PD~log((richdataEuk2$Plant_Dens+1),base=10)))
+summary(lm(pdN3$PD~log((pdN3$Plant_Dens+1),base=10)))
+
+#plot with dashed vertical lines for low med hi, just euks, trying it out, I don't really like how it looks
 ggplot(richdataEuk2,aes(x=log10(Plant_Dens+1),y=PD))+#as.numeric(fert),color=species
   labs(x="Plant density",y="Phylogenetic diversity")+
   theme_classic()+
@@ -172,11 +203,6 @@ ggplot(richdataEuk2,aes(x=log10(Plant_Dens+1),y=PD))+#as.numeric(fert),color=spe
   geom_smooth(method=lm,se=F,size=.8,color="black") +
   geom_vline(aes(xintercept=log10(36+1)), colour="gray30", linetype="dashed")+
   geom_vline(aes(xintercept=log10(89+1)), colour="gray30", linetype="dashed")#+facet_wrap(~type,scales="free")
-
-
-
-
-
 
 
 

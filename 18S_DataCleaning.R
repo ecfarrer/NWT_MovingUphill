@@ -120,7 +120,7 @@ dat<-merge_phyloseq(otufile,map)
 
 #Add tree file
 #This has not yet been integrated into dat
-treefile <- read_tree("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Euk_ALL_truncate_97_sinaaln_rep_set.tre")
+treefile <- read_tree("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Euks/Euk_ALL_truncate_97_sinaaln_rep_set.tre")
 plot(treefile) #takes a long time
 
 dattree<-merge_phyloseq(otufile,map,treefile) #takes a long time, maybe 30 min to 1 hr. I lose 23,855 taxa when I merge the treefile, I assume this is because some samples could not be aligned
@@ -130,22 +130,6 @@ myTaxa = names(sort(taxa_sums(dattree), decreasing = TRUE)[1:10])
 ex1 = prune_taxa(myTaxa, dattree)
 plot(phy_tree(ex1), show.node.label = TRUE)
 plot_tree(ex1, color = "Description", label.tips = "phylum", ladderize = "left", size = "Abundance",plot.margin=.8)#,justify = "left"
-
-
-#Remove OTUs that do not appear more than 5 times in more than half the samples
-wh0 = genefilter_sample(talus, filterfun_sample(function(x) x > 5), A = 0.5 * nsamples(talus))
-talus1 = prune_taxa(wh0, talus)
-plot_tree(ex1, color = "Description", label.tips = "kingdom", ladderize = "left", justify = "left" , size = "Abundance")
-
-#ordination to compare with html file
-ordu = ordinate(talus,method="PCoA", distance="unifrac", weighted = TRUE,normalized=FALSE)
-p=plot_ordination(talus, ordu, color = "Depth", shape = "Description")
-p = p + geom_point(size = 7, alpha = 0.75)
-p
-distmatp<-UniFrac(talus,weighted=TRUE)
-distmatp2<-UniFrac(talus,weighted=TRUE,normalized=FALSE)#this produces the output from the qiime code, the axis percent varience explained are slightly different from qiime, probably b/c how they deal with negative eigenvalues. here it is eig/total
-
-##############
 
 
 
@@ -163,6 +147,9 @@ dats2<-subset_taxa(dats,domain=="Eukaryota"&class!="Embryophyta")
 dats2t<-subset_taxa(datst,domain=="Eukaryota"&class!="Embryophyta")
 dats2tr<-rarefy_even_depth(dats2t,sample.size=min(sample_sums(dats2t)),rngseed=10,replace=F)#rarefy to 761, this is quite low
 pdEuk<-pd(as.matrix(as.data.frame(t(otu_table(dats2tr)))), phy_tree(dats2tr), include.root=TRUE) #takes a few minutes
+
+length(which(colSums(t(otu_table(dats2)))>0))#remove zeros, count total number of OTUs
+sum(t(otu_table(dats2)))
 
 #Renaming and organizing orders and kingdoms here, then replace the tax table in dats2 to include these new groupings
 dats2tax<-as.data.frame(tax_table(dats2))
@@ -302,7 +289,7 @@ min(sample_sums(dats10)) #need to rarefy to 1121 reads
 dats10otu<-cbind(sample_data(dats2),t(otu_table(dats10)))
 head(dats10otu)[,1:40]
 
-#Third try, trying to be consistent with sample size minimum in the network analysis (my cutoff there is 3 or 4 or 5). Follwing Widder et al 2014 PNAS
+#Third try, filter doubletons/singletons. Follwing Widder et al 2014 PNAS
 wh0 = genefilter_sample(dats2, filterfun_sample(function(x) x > 0), A = 3)#5016 taxa
 dats10a = prune_taxa(wh0, dats2)
 dats10a
@@ -322,6 +309,48 @@ head(t(otu_table(dats10r)))[,1:30]
 
 
 
+
+
+#I can't extract nematode samples OTUs because the holozoa do not have labels in the mapping file. tax_table2 is the original tax table with full line of taxononmy Eukaryota_Opisthokonta_Nucletmycea_Fungi_Dikarya_Ascomycota_Pezizomycotina_Sordariomycetes_Hypocreales
+#all taxa in the file going into the network analysis (not rarefied but doesn't matter)
+temp3<-rownames(tax_table(dats10)) 
+
+#full taxonomies
+head(tax_table2)
+temptax<-as.character(tax_table2)
+ind<-grep("Nematoda",temptax)
+temp2<-tax_table2[ind,]
+nematodeids<-rownames(temp2)
+
+intersect(temp,nematodeids) #there are no nematodes present in the otufile going into network analysis
+length(union(temp,nematodeids))
+
+#checking that there are still nematodes in the original 2015 subset file, they are present in dat and dats but not dats2
+temp<-rownames(otu_table(dats))
+intersect(temp,nematodeids)
+
+temp <-import_biom("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Euk_ALL_97_OTU_filtsing.biom")
+dim(tax_table(temp))
+dim(otu_table(temp))
+
+ind<-which(rownames(otu_table(temp))=="denovo244871")
+tax_table(temp)[ind,] #it imported correctly and has holozoa in the label
+
+#after my taxonomy rearrangement what did it do? that is correct
+tax_table(otufile)[ind,]
+
+#
+
+
+
+
+
+
+
+
+
+
+
 ######Grouping by kingdom#####
 dats7<-transform_sample_counts(dats2, function(x) 100*x/sum(x) )
 dats8<-otu_table(dats7)
@@ -329,6 +358,43 @@ dats9<-aggregate.data.frame(dats8,by=list(kingdomlabels=kingdomlabels),sum)
 rownames(dats9)<-dats9$kingdomlabels
 dats9$kingdomlabels<-NULL
 dats9kingdom<-cbind(sample_data(dats2),t(dats9))
+
+
+
+
+
+
+
+##### Nematode data #####
+#import_biom gave an error when I tried to import the biom file I created on the server from Dorota's otu text table. I can't figure out why it gave the error beacuse the text file looks exactly like the other text files that have all euk data.
+otufileN<-read.csv("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Nematodes/Nema_OTUtable_species.csv")
+head(otufileN)
+otufileN1<-otufileN[,2:(dim(otufileN)[2]-1)]
+rownames(otufileN1)<-otufileN[,1]
+head(otufileN1)
+otufileN2 = otu_table(otufileN1, taxa_are_rows = TRUE)
+taxfileN<-matrix(otufileN[,dim(otufileN)[2]])
+rownames(taxfileN)<-otufileN[,1]
+colnames(taxfileN)<-"Rank1"
+taxfileN1 = tax_table(taxfileN)
+datN = phyloseq(otufileN2,taxfileN1,map,treefile)
+datN
+pdN<-pd(as.matrix(as.data.frame(t(otu_table(datN)))),phy_tree(datN),include.root=TRUE) 
+
+rownames(otu_table(otufile))[which(rownames(otu_table(otufile))%in%rownames(otufileN1))]
+treefile$tip.label[which(treefile$tip.label%in%rownames(otufileN1))]
+denovo120212 denovo68570
+tax_table(otufile)[which(rownames(tax_table(otufile))=="denovo256418")]
+#denovo256418
+
+
+
+
+
+
+
+
+
 
 
 

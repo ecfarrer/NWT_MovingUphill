@@ -3,6 +3,7 @@ library(phyloseq)
 library(foreach)
 library(doParallel)
 library(data.table)
+library(picante)
 packageVersion("phyloseq")
 
 #Read in biom file, with singletons removed
@@ -116,9 +117,9 @@ dat16S<-merge_phyloseq(otufile16S,map16S)
 #XXXXXXXXX add tree file when fastree stops
 #This has not yet been integrated into dat
 treefile16S <- read_tree("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/Bact/16S_ALL_truncate_97_sinaaln_rep_set.tre")
-plot(treefile) #takes a long time
+#plot(treefile) #takes a long time
 
-dat16Stree<-merge_phyloseq(otufile16S,map16S,treefile16S) #takes a long time, maybe 30 min to 1 hr. I lose 62,874 taxa (about half of the taxa) when I merge the treefile, I assume this is because some samples could not be aligned
+dat16Stree<-merge_phyloseq(otufile16S,map16S,treefile16S) #takes a long time, maybe 1 hr. I lose 62,874 taxa (about half of the taxa) when I merge the treefile, I assume this is because some samples could not be aligned
 
 
 
@@ -127,9 +128,15 @@ dat16Stree<-merge_phyloseq(otufile16S,map16S,treefile16S) #takes a long time, ma
 
 ######Soil data from 2015######
 dat16Ss<-subset_samples(dat16S, SampleType=="soil"&year=="2015")
+dat16Sst<-subset_samples(dat16Stree, SampleType=="soil"&year=="2015")
 
 #take euks out
 dat16Ss2<-subset_taxa(dat16Ss,domain%in%c("Archaea","Bacteria")&family!="mitochondria"&class!="Chloroplast")
+dat16Ss2t<-subset_taxa(dat16Sst,domain%in%c("Archaea","Bacteria")&family!="mitochondria"&class!="Chloroplast")
+#for tree data, take out samples 34, 5, 126 because they had less than 30 total reads
+dat16Ss2ta = prune_samples(names(which(sample_sums(dat16Ss2t) >= 200)), dat16Ss2t)
+dat16Ss2tar<-rarefy_even_depth(dat16Ss2ta,sample.size=min(sample_sums(dat16Ss2ta)),rngseed=10,replace=F)#rarefy to 3026, takes a few minutes
+pd16S<-pd(as.matrix(as.data.frame(t(otu_table(dat16Ss2tar)))),phy_tree(dat16Ss2tar),include.root=TRUE) #takes a few hours
 
 #Renaming and organizing orders and kingdoms here, then replace the tax table in dats2 to include these new groupings
 dat16Ss2tax<-as.data.frame(tax_table(dat16Ss2))
@@ -148,6 +155,8 @@ head(bacterialabels)
 dat16Ss2a = prune_samples(names(which(sample_sums(dat16Ss2) >= 200)), dat16Ss2)
 dat16Ss2a_s<-sample_data(dat16Ss2a)
 dat16Ss2a_o<-t(otu_table(dat16Ss2a))
+length(which(colSums(dat16Ss2a_o)>0))#remove zeros, count total number of OTUs
+sum(dat16Ss2a_o)
 
 #this file is too large to use cbind. online it was suggested to use data.table to store and manipulate large datasets, however it has a whole different syntax than data.frames
 #dat16Ss2b<-cbind(dat16Ss2a_s,dat16Ss2a_ot)

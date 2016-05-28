@@ -2,7 +2,7 @@
 
 setwd("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/NWT_MovingUphill")
 
-#save.image("~/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/MovingUphill_Workspace_Analysis_byOTU4.Rdata") #results has the results from OTU cooccurrence patterns, 2 is with plants/bac/euk, 3 is with nematodes, 4 is with .tre files for bacteria
+save.image("~/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/MovingUphill_Workspace_Analysis_byOTU4.Rdata") #results has the results from OTU cooccurrence patterns, 2 is with plants/bac/euk, 3 is with nematodes, 4 is with .tre files for bacteria
 
 load("/Users/farrer/Dropbox/EmilyComputerBackup/Documents/Niwot_King/Figures&Stats/kingdata/MovingUphill_Workspace_Analysis_byOTU4.Rdata")
 
@@ -21,3 +21,9 @@ library(phyloseq)
 library(foreach)
 library(doParallel)
 library(data.table)
+#library(BiodiversityR) #this requires X11 and takes a while to load, you need to close the window that it opens in rcommander
+library(picante)
+library(ggplot2)
+library(NetIndices)
+library(igraph)
+library(fdrtool)
